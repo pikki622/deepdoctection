@@ -57,7 +57,7 @@ def to_image(dp: Union[str, Mapping[str, Union[str, bytes]]], dpi: Optional[int]
         page_number = int(dp.get("page_number", 0))
         location = str(dp.get("location", ""))
         document_id = dp.get("document_id")
-        if location == "":
+        if not location:
             location = str(dp.get("path", ""))
     else:
         raise TypeError("datapoint not of expected type for converting to image")
@@ -76,10 +76,7 @@ def to_image(dp: Union[str, Mapping[str, Union[str, bytes]]], dpi: Optional[int]
             else:
                 dp_image.image = load_image_from_file(location)
 
-    if mapping_context.context_error:
-        return None
-
-    return dp_image
+    return None if mapping_context.context_error else dp_image
 
 
 def maybe_load_image(dp: Image) -> Image:

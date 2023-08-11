@@ -318,6 +318,4 @@ class Pipeline(ABC):
         comp_info_name_as_key = {value: key for key, value in comp_info.items()}
         if position is not None:
             return comp_info[position]
-        if name is not None:
-            return comp_info_name_as_key[name]
-        return comp_info
+        return comp_info_name_as_key[name] if name is not None else comp_info

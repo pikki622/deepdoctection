@@ -147,11 +147,7 @@ class DocLayNetBuilder(DataFlowBaseBuilder):
         df = SerializerCoco.load(path, max_datapoints=max_datapoints)
 
         # Map
-        if resized:
-            png_folder = "PNG_resized"
-        else:
-            png_folder = "PNG"
-
+        png_folder = "PNG_resized" if resized else "PNG"
         df = MapDataComponent(df, lambda dp: self.get_workdir() / png_folder / dp, "file_name")
         df = MapData(
             df,

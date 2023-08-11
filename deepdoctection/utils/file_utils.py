@@ -79,10 +79,8 @@ def get_tensorflow_requirement() -> Requirement:
     tf_requirement_satisfied = False
     tf_version = get_tf_version()
     _tf_version_available = tf_version != "0.0"
-    if _tf_version_available:
-        if version.parse(tf_version) < version.parse("2.4.1"):
-            pass
-        else:
+    if version.parse(tf_version) >= version.parse("2.4.1"):
+        if _tf_version_available:
             tf_requirement_satisfied = True
 
     return "tensorflow", tf_requirement_satisfied, _TF_ERR_MSG
@@ -268,11 +266,7 @@ def set_tesseract_path(tesseract_path: str) -> None:
 
     tesseract_flag = which(tesseract_path)
 
-    if tesseract_flag is None:
-        _TESS_AVAILABLE = False
-    else:
-        _TESS_AVAILABLE = True
-
+    _TESS_AVAILABLE = tesseract_flag is not None
     _TESS_PATH = tesseract_path
 
 
@@ -312,9 +306,7 @@ def get_tesseract_version() -> Union[int, version.Version]:
 
     current_version = version.parse(str_version)
 
-    if current_version >= version.Version("4.0"):
-        return current_version
-    return 0
+    return current_version if current_version >= version.Version("4.0") else 0
 
 
 def get_tesseract_requirement() -> Requirement:
@@ -374,9 +366,7 @@ def get_poppler_version() -> Union[int, version.Version]:
     raw_version = output.decode("utf-8")
     list_version = raw_version.split("\n", maxsplit=1)[0].split(" ")[-1].split(".")
 
-    current_version = version.parse(".".join(list_version[:2]))
-
-    return current_version
+    return version.parse(".".join(list_version[:2]))
 
 
 def get_poppler_requirement() -> Requirement:
@@ -663,7 +653,7 @@ class _LazyModule(ModuleType):
 
     @no_type_check
     def _get_module(self, module_name: str):
-        return importlib.import_module("." + module_name, self.__name__)
+        return importlib.import_module(f".{module_name}", self.__name__)
 
     @no_type_check
     def __reduce__(self):

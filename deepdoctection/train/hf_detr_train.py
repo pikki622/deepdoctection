@@ -225,13 +225,13 @@ def train_hf_detr(
         num_labels=len(id2label),
     )
 
-    if path_weights != "":
+    if not path_weights:
+        model = TableTransformerForObjectDetection(config)
+
+    else:
         model = TableTransformerForObjectDetection.from_pretrained(
             pretrained_model_name_or_path=path_weights, config=config
         )
-    else:
-        model = TableTransformerForObjectDetection(config)
-
     feature_extractor = AutoFeatureExtractor.from_pretrained(
         pretrained_model_name_or_path=path_feature_extractor_config_json
     )

@@ -127,6 +127,4 @@ def tf_nms_image_annotations(
     class_mask = convert_to_tensor(len(boxes), dtype=uint8)
     keep = non_max_suppression(boxes, scores, class_mask, iou_threshold=threshold)
     ann_ids_keep = ann_ids[keep]
-    if not isinstance(ann_ids_keep, str):
-        return ann_ids_keep.tolist()
-    return []
+    return ann_ids_keep.tolist() if not isinstance(ann_ids_keep, str) else []

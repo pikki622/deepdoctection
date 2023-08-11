@@ -419,10 +419,11 @@ class FastRCNNHead:
         anchors = tf.tile(
             tf.expand_dims(self.proposals.boxes, 1), [1, self._num_classes, 1]  # pylint: disable =E1101
         )  # N x #class x 4
-        decoded_boxes = decode_bbox_target(
-            self.box_logits / self.bbox_regression_weights, anchors, self.cfg.PREPROC.MAX_SIZE  # pylint: disable =E1101
+        return decode_bbox_target(
+            self.box_logits / self.bbox_regression_weights,
+            anchors,
+            self.cfg.PREPROC.MAX_SIZE,  # pylint: disable =E1101
         )
-        return decoded_boxes
 
     @memoized_method
     def decoded_output_boxes_for_true_label(self):
@@ -446,12 +447,11 @@ class FastRCNNHead:
         assert not self._bbox_class_agnostic
         indices = tf.stack([tf.range(tf.size(labels, out_type=tf.int64)), labels])
         needed_logits = tf.gather_nd(self.box_logits, indices)  # pylint: disable =E1101
-        decoded = decode_bbox_target(
+        return decode_bbox_target(
             needed_logits / self.bbox_regression_weights,  # pylint: disable =E1101
             self.proposals.boxes,  # pylint: disable =E1101
             self.cfg.PREPROC.MAX_SIZE,
         )
-        return decoded
 
     @memoized_method
     def decoded_output_boxes_class_agnostic(self):
@@ -460,12 +460,11 @@ class FastRCNNHead:
         """
         assert self._bbox_class_agnostic
         box_logits = tf.reshape(self.box_logits, [-1, 4])  # pylint: disable =E1101
-        decoded = decode_bbox_target(
+        return decode_bbox_target(
             box_logits / self.bbox_regression_weights,  # pylint: disable =E1101
             self.proposals.boxes,  # pylint: disable =E1101
             self.cfg.PREPROC.MAX_SIZE,
         )
-        return decoded
 
     @memoized_method
     def output_scores(self, name=None):

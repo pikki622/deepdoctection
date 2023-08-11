@@ -92,6 +92,4 @@ def pascal_voc_dict_to_image(
             )
             image.dump(annotation)
 
-    if mapping_context.context_error:
-        return None
-    return image
+    return None if mapping_context.context_error else image

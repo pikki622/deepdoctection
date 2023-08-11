@@ -100,9 +100,7 @@ class DatasetBase(ABC):
         Datasets must be downloaded and maybe unzipped manually. Checks, if the folder exists, where the dataset is
         expected.
         """
-        if os.path.isdir(self._dataflow_builder.get_workdir()):
-            return True
-        return False
+        return bool(os.path.isdir(self._dataflow_builder.get_workdir()))
 
     @staticmethod
     def is_built_in() -> bool:
@@ -225,6 +223,9 @@ class MergeDataset(DatasetBase):
         return DatasetInfo(name="merge")
 
     def _builder(self) -> DataFlowBaseBuilder:
+
+
+
         class MergeDataFlow(DataFlowBaseBuilder):
             """
             Dataflow builder for merged datasets
@@ -245,16 +246,17 @@ class MergeDataset(DatasetBase):
                 :param kwargs: arguments for :build()
                 :return: Dataflow
                 """
-                df_list = []
                 if self.dataflows is not None:
                     logger.info("Will used dataflow from previously explicitly passed configuration")
                     return ConcatData(list(self.dataflows))
 
                 logger.info("Will use the same build setting for all dataflows")
-                for dataflow_builder in self.dataflow_builders:
-                    df_list.append(dataflow_builder.build(**kwargs))
-                df = ConcatData(df_list)
-                return df
+                df_list = [
+                    dataflow_builder.build(**kwargs)
+                    for dataflow_builder in self.dataflow_builders
+                ]
+                return ConcatData(df_list)
+
 
         builder = MergeDataFlow(*(dataset.dataflow for dataset in self.datasets))
         if self.dataflows is not None:
@@ -357,9 +359,11 @@ class MergeDataset(DatasetBase):
 
         if set(split_dict.keys()) != {"train", "val", "test"}:
             raise KeyError("split_dict must contain keys for 'train', 'val' and 'test'")
-        ann_id_to_split = {ann_id: "train" for ann_id in split_dict["train"]}
-        ann_id_to_split.update({ann_id: "val" for ann_id in split_dict["val"]})
-        ann_id_to_split.update({ann_id: "test" for ann_id in split_dict["test"]})
+        ann_id_to_split = (
+            {ann_id: "train" for ann_id in split_dict["train"]}
+            | {ann_id: "val" for ann_id in split_dict["val"]}
+            | {ann_id: "test" for ann_id in split_dict["test"]}
+        )
         self.buffer_datasets(**dataflow_build_kwargs)
         split_defaultdict = defaultdict(list)
         for image in self.datapoint_list:  # type: ignore

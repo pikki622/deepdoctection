@@ -77,10 +77,7 @@ def _proto_process(
         file_name = dp.file_name
     else:
         file_name = dp["file_name"]
-    if path is None:
-        path_tmp = doc_path
-    else:
-        path_tmp = path
+    path_tmp = doc_path if path is None else path
     logger.info("Processing %s", file_name, {"path": path_tmp, "df": path_tmp, "file_name": file_name})
     return dp
 
@@ -94,9 +91,7 @@ def _doc_to_dataflow(path: Pathlike, max_datapoints: Optional[int] = None) -> Da
     if not os.path.isfile(path):
         raise FileExistsError(f"{path} not a file")
 
-    df = SerializerPdfDoc.load(path, max_datapoints=max_datapoints)
-
-    return df
+    return SerializerPdfDoc.load(path, max_datapoints=max_datapoints)
 
 
 class DoctectionPipe(Pipeline):
@@ -180,8 +175,7 @@ class DoctectionPipe(Pipeline):
         """
         if not os.path.isdir(path):
             raise NotADirectoryError(f"{path} not a directory")
-        df = SerializerFiles.load(path, file_type, max_datapoints, shuffle)
-        return df
+        return SerializerFiles.load(path, file_type, max_datapoints, shuffle)
 
     @staticmethod
     def doc_to_dataflow(path: Pathlike, max_datapoints: Optional[int] = None) -> DataFlow:

@@ -127,11 +127,11 @@ class DetrDataCollator:
                 images_input.append(feature["image"])
             else:
                 images_input.append(maybe_image)
-        image_features = self.feature_extractor(  # pylint: disable=E1102
-            images_input, annotations=raw_features, return_tensors=self.return_tensors
+        return self.feature_extractor(  # pylint: disable=E1102
+            images_input,
+            annotations=raw_features,
+            return_tensors=self.return_tensors,
         )
-
-        return image_features
 
     def maybe_pad_image_and_transform(self, feature: JsonDict) -> JsonDict:
         """

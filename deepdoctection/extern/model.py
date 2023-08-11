@@ -785,11 +785,11 @@ class ModelCatalog:
         :param path_weights: relative or absolute path
         :return: True if the weights are registered in `ModelCatalog`
         """
-        if (ModelCatalog.get_full_path_weights(path_weights) in ModelCatalog.get_model_list()) or (
-            path_weights in ModelCatalog.get_model_list()
-        ):
-            return True
-        return False
+        return (
+            ModelCatalog.get_full_path_weights(path_weights)
+            in ModelCatalog.get_model_list()
+            or path_weights in ModelCatalog.get_model_list()
+        )
 
     @staticmethod
     def get_profile(name: str) -> ModelProfile:
@@ -827,11 +827,7 @@ def get_tp_weight_names(name: str) -> List[str]:
     """
     _, file_name = os.path.split(name)
     prefix, _ = file_name.split(".")
-    weight_names = []
-    for suffix in ["data-00000-of-00001", "index"]:
-        weight_names.append(prefix + "." + suffix)
-
-    return weight_names
+    return [f"{prefix}.{suffix}" for suffix in ["data-00000-of-00001", "index"]]
 
 
 def print_model_infos(add_description: bool = True, add_config: bool = True, add_categories: bool = True) -> None:
@@ -975,15 +971,14 @@ class ModelDownloadManager:
     def _load_from_hf_hub(repo_id: str, file_name: str, cache_directory: str, force_download: bool = False) -> int:
         url = hf_hub_url(repo_id=repo_id, filename=file_name)
         token = os.environ.get("HF_CREDENTIALS")
-        f_path = cached_download(
+        if f_path := cached_download(
             url,
             cache_dir=cache_directory,
             force_filename=file_name,
             force_download=force_download,
             token=token,
             legacy_cache_layout=True,
-        )
-        if f_path:
+        ):
             stat_info = os.stat(f_path)
             size = stat_info.st_size
 

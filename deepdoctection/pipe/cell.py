@@ -102,9 +102,7 @@ class DetectResultGenerator:
         count = Counter([str(ann.class_id) for ann in detect_result_list])
         cat_to_group_sum = {}
         for group in self.group_categories:
-            group_sum = 0
-            for el in group:
-                group_sum += count[el]
+            group_sum = sum(count[el] for el in group)
             for el in group:
                 cat_to_group_sum[el] = group_sum
         return cat_to_group_sum
@@ -223,9 +221,7 @@ class SubImageLayoutService(PredictorPipelineComponent):
 
     def clone(self) -> "PredictorPipelineComponent":
         predictor = self.predictor.clone()
-        padder_clone = None
-        if self.padder:
-            padder_clone = self.padder.clone()
+        padder_clone = self.padder.clone() if self.padder else None
         if not isinstance(predictor, ObjectDetector):
             raise ValueError(f"predictor must be of type ObjectDetector but is of type {type(predictor)}")
         return self.__class__(

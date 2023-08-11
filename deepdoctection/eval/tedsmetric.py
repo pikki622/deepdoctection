@@ -142,9 +142,7 @@ class TEDS:
         if node.tag != "td":
             for n in node.getchildren():
                 self.load_html_tree(n, new_node)
-        if parent is None:
-            return new_node
-        return None
+        return new_node if parent is None else None
 
     def evaluate(self, inputs: Tuple[str, str]) -> float:
         """Computes TEDS score between the prediction and the ground truth of a
@@ -174,9 +172,7 @@ class TEDS:
         tree_pred = self.load_html_tree(pred_tr)  # type: ignore
         tree_true = self.load_html_tree(ground_truth_tr)  # type: ignore
         dist = APTED(tree_pred, tree_true, CustomConfig()).compute_edit_distance()
-        if n_nodes:
-            return 1.0 - (float(dist) / n_nodes)
-        return 0.0
+        return 1.0 - (float(dist) / n_nodes) if n_nodes else 0.0
 
 
 def teds_metric(gt_list: List[str], predict_list: List[str], structure_only: bool) -> Tuple[float, int]:
@@ -195,13 +191,9 @@ def teds_metric(gt_list: List[str], predict_list: List[str], structure_only: boo
         df = MultiThreadMapData(df, 2, teds.evaluate, strict=True)
     else:
         df = MapData(df, teds.evaluate)
-    scores = []
     df.reset_state()
 
-    for dp in df:
-        if dp != -1.0:
-            scores.append(dp)
-
+    scores = [dp for dp in df if dp != -1.0]
     return statistics.fmean(scores), len(scores)
 
 

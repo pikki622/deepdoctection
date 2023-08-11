@@ -59,8 +59,7 @@ def prodigy_to_image(
         return None
 
     file_name: Optional[str] = None
-    meta = dp.get("meta")
-    if meta:
+    if meta := dp.get("meta"):
         file_name = meta.get("file")
 
     if not file_name:
@@ -68,8 +67,7 @@ def prodigy_to_image(
     if not file_name:
         file_name = dp.get("text")
     if not file_name:
-        path = dp.get("path")
-        if path:
+        if path := dp.get("path"):
             path, file_name = os.path.split(path)
     if not file_name:
         file_name = ""
@@ -138,9 +136,7 @@ def prodigy_to_image(
             )
             image.dump(annotation)
 
-    if mapping_context.context_error:
-        return None
-    return image
+    return None if mapping_context.context_error else image
 
 
 def image_to_prodigy(dp: Image) -> JsonDict:

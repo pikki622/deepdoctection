@@ -95,7 +95,7 @@ def d2_predict_image(
         predictions = predictor([inputs])[0]
         predictions = _d2_post_processing(predictions, nms_thresh_class_agnostic)
     instances = predictions["instances"]
-    results = [
+    return [
         DetectionResult(
             box=instances[k].pred_boxes.tensor.tolist()[0],
             score=instances[k].scores.tolist()[0],
@@ -103,7 +103,6 @@ def d2_predict_image(
         )
         for k in range(len(instances))
     ]
-    return results
 
 
 def d2_jit_predict_image(
@@ -139,10 +138,12 @@ def d2_jit_predict_image(
         # If only one sample is left, it will squeeze np_boxes, so we need to expand it here
         if np_boxes.ndim == 1:
             np_boxes = np.expand_dims(np_boxes, axis=0)
-    detect_result_list = []
-    for box, label, score in zip(np_boxes, classes, scores):
-        detect_result_list.append(DetectionResult(box=box.tolist(), class_id=label.item(), score=score.item()))
-    return detect_result_list
+    return [
+        DetectionResult(
+            box=box.tolist(), class_id=label.item(), score=score.item()
+        )
+        for box, label, score in zip(np_boxes, classes, scores)
+    ]
 
 
 class D2FrcnnDetector(ObjectDetector):
@@ -205,10 +206,7 @@ class D2FrcnnDetector(ObjectDetector):
         self.path_yaml = path_yaml
         self.categories = copy(categories)  # type: ignore
         self.config_overwrite = config_overwrite
-        if device is not None:
-            self.device = device
-        else:
-            self.device = set_torch_auto_device()
+        self.device = device if device is not None else set_torch_auto_device()
         if filter_categories:
             filter_categories = [get_type(cat) for cat in filter_categories]
         self.filter_categories = filter_categories
@@ -272,10 +270,11 @@ class D2FrcnnDetector(ObjectDetector):
             result.class_name = self._categories_d2[str(result.class_id)]
             if isinstance(result.class_id, int):
                 result.class_id += 1
-            if self.filter_categories:
-                if result.class_name not in self.filter_categories:
-                    filtered_detection_result.append(result)
-            else:
+            if (
+                self.filter_categories
+                and result.class_name not in self.filter_categories
+                or not self.filter_categories
+            ):
                 filtered_detection_result.append(result)
         return filtered_detection_result
 
@@ -410,10 +409,11 @@ class D2FrcnnTracingDetector(ObjectDetector):
             result.class_name = self._categories_d2[str(result.class_id)]
             if isinstance(result.class_id, int):
                 result.class_id += 1
-            if self.filter_categories:
-                if result.class_name not in self.filter_categories:
-                    filtered_detection_result.append(result)
-            else:
+            if (
+                self.filter_categories
+                and result.class_name not in self.filter_categories
+                or not self.filter_categories
+            ):
                 filtered_detection_result.append(result)
         return filtered_detection_result
 

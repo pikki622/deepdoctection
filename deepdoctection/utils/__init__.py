@@ -33,17 +33,18 @@ def _global_import(
     lst = p.__all__ if "__all__" in dir(p) else dir(p)
     for k in lst:
         if not k.startswith("__"):
-            if prefix_default and suffix_default:
+            if (
+                (not prefix_default or not suffix_default)
+                and not prefix_default
+                and k.startswith(prefix)
+                or (not prefix_default or not suffix_default)
+                and prefix_default
+                and k.endswith(suffix)
+                or prefix_default
+                and suffix_default
+            ):
                 globals()[k] = p.__dict__[k]
                 __all__.append(k)
-            elif not prefix_default:
-                if k.startswith(prefix):
-                    globals()[k] = p.__dict__[k]
-                    __all__.append(k)
-            elif not suffix_default:
-                if k.endswith(suffix):
-                    globals()[k] = p.__dict__[k]
-                    __all__.append(k)
 
 
 _global_import("file_utils", suffix=("_available", "_requirement"))

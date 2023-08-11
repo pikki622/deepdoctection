@@ -75,8 +75,7 @@ class ImageLayoutService(PredictorPipelineComponent):
     def serve(self, dp: Image) -> None:
         if self.skip_if_layout_extracted:
             categories = self.predictor.possible_categories()  # type: ignore
-            anns = dp.get_annotation(category_names=categories)
-            if anns:
+            if anns := dp.get_annotation(category_names=categories):
                 return
         if dp.image is None:
             raise ValueError("image cannot be None")
@@ -110,9 +109,7 @@ class ImageLayoutService(PredictorPipelineComponent):
 
     def clone(self) -> "PredictorPipelineComponent":
         predictor = self.predictor.clone()
-        padder_clone = None
-        if self.padder:
-            padder_clone = self.padder.clone()
+        padder_clone = self.padder.clone() if self.padder else None
         if not isinstance(predictor, ObjectDetector):
             raise ValueError(f"predictor must be of type ObjectDetector, but is of type {type(predictor)}")
         return self.__class__(predictor, self.to_image, self.crop_image, padder_clone, self.skip_if_layout_extracted)

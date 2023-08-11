@@ -119,7 +119,7 @@ def tp_predict_image(
         # fill with none
         masks = [None] * len(boxes)
     labels = labels.tolist()
-    results = [
-        DetectionResult(box=args[0], score=args[1], class_id=args[2]) for args in zip(boxes, score, labels, masks)
+    return [
+        DetectionResult(box=args[0], score=args[1], class_id=args[2])
+        for args in zip(boxes, score, labels, masks)
     ]
-    return results

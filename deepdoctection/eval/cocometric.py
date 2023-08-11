@@ -99,10 +99,7 @@ def _summarize(  # type: ignore
             t = np.where(iouThr == p.iouThrs)[0]
             s = s[t]
         s = s[:, :, aind, mind]
-    if len(s[s > -1]) == 0:
-        mean_s = -1
-    else:
-        mean_s = np.mean(s[s > -1])
+    mean_s = -1 if len(s[s > -1]) == 0 else np.mean(s[s > -1])
     print(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))
     return mean_s
 

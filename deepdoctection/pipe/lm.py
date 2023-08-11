@@ -164,7 +164,7 @@ class LMTokenClassifierService(LanguageModelPipelineComponent):
             "segment_positions": self.segment_positions,
             "sliding_window_stride": self.sliding_window_stride,
         }
-        self.required_kwargs.update(self.language_model.default_kwargs_for_input_mapping())
+        self.required_kwargs |= self.language_model.default_kwargs_for_input_mapping()
         self._init_sanity_checks()
 
     def serve(self, dp: Image) -> None:
@@ -245,9 +245,7 @@ class LMTokenClassifierService(LanguageModelPipelineComponent):
 
     def _init_sanity_checks(self) -> None:
         tokenizer_class = self.language_model.model.config.tokenizer_class
-        use_xlm_tokenizer = False
-        if tokenizer_class is not None:
-            use_xlm_tokenizer = True
+        use_xlm_tokenizer = tokenizer_class is not None
         tokenizer_reference = get_tokenizer_from_architecture(
             self.language_model.model.__class__.__name__, use_xlm_tokenizer
         )
@@ -323,7 +321,7 @@ class LMSequenceClassifierService(LanguageModelPipelineComponent):
             "return_overflowing_tokens": self.return_overflowing_tokens,
             "return_tensors": "pt",
         }
-        self.required_kwargs.update(self.language_model.default_kwargs_for_input_mapping())
+        self.required_kwargs |= self.language_model.default_kwargs_for_input_mapping()
         self._init_sanity_checks()
 
     def serve(self, dp: Image) -> None:
@@ -359,9 +357,7 @@ class LMSequenceClassifierService(LanguageModelPipelineComponent):
 
     def _init_sanity_checks(self) -> None:
         tokenizer_class = self.language_model.model.config.tokenizer_class
-        use_xlm_tokenizer = False
-        if tokenizer_class is not None:
-            use_xlm_tokenizer = True
+        use_xlm_tokenizer = tokenizer_class is not None
         tokenizer_reference = get_tokenizer_from_architecture(
             self.language_model.model.__class__.__name__, use_xlm_tokenizer
         )

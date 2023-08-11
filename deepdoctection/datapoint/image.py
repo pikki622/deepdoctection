@@ -118,9 +118,7 @@ class Image:
             raise ValueError("image_id already defined and cannot be reset")
         if is_uuid_like(input_id):
             self._image_id = input_id
-        elif isinstance(input_id, property):
-            pass
-        else:
+        elif not isinstance(input_id, property):
             raise ValueError("image_id must be uuid3 string")
 
     @property
@@ -141,21 +139,17 @@ class Image:
         """
 
         if isinstance(image, property):
-            pass
-        elif isinstance(image, str):
+            return
+        if isinstance(image, str):
             self._image = convert_b64_to_np_array(image)
-            self.set_width_height(self._image.shape[1], self._image.shape[0])
-            self._self_embedding()
         elif isinstance(image, bytes):
             self._image = convert_pdf_bytes_to_np_array_v2(image, dpi=300)
-            self.set_width_height(self._image.shape[1], self._image.shape[0])
-            self._self_embedding()
-        else:
-            if not isinstance(image, np.ndarray):
-                raise TypeError(f"Cannot load image is of type: {type(image)}")
+        elif isinstance(image, np.ndarray):
             self._image = image.astype(uint8)
-            self.set_width_height(self._image.shape[1], self._image.shape[0])
-            self._self_embedding()
+        else:
+            raise TypeError(f"Cannot load image is of type: {type(image)}")
+        self.set_width_height(self._image.shape[1], self._image.shape[0])
+        self._self_embedding()
 
     @property
     def summary(self) -> Optional[SummaryAnnotation]:
@@ -174,9 +168,7 @@ class Image:
         """
         pdf_bytes. This attribute will be set dynamically and is not part of the core Image data model
         """
-        if hasattr(self, "_pdf_bytes"):
-            return getattr(self, "_pdf_bytes")
-        return None
+        return getattr(self, "_pdf_bytes") if hasattr(self, "_pdf_bytes") else None
 
     @pdf_bytes.setter
     def pdf_bytes(self, pdf_bytes: bytes) -> None:
@@ -200,7 +192,7 @@ class Image:
             self._bbox = None
             self.embeddings.pop(self.image_id)
 
-    def get_image(self) -> "_Img":  # type: ignore
+    def get_image(self) -> "_Img":    # type: ignore
         """
         Get the image either in base64 string representation or as np.array.
 
@@ -212,6 +204,8 @@ class Image:
 
         :return: desired image encoding representation
         """
+
+
 
         class _Img:
             """
@@ -235,9 +229,8 @@ class Image:
 
                 :return: b64 encoded string
                 """
-                if self.img is not None:
-                    return convert_np_array_to_b64(self.img)
-                return self.img
+                return convert_np_array_to_b64(self.img) if self.img is not None else self.img
+
 
         return _Img(self.image)
 
@@ -452,7 +445,7 @@ class Image:
 
         if crop_image and self.image is not None:
             new_image.image = crop_box_from_image(self.image, ann.bounding_box, self.width, self.height)
-        elif crop_image and self.image is None:
+        elif crop_image:
             raise ValueError("crop_image = True requires self.image to be not None")
 
         ann.image = new_image
@@ -528,8 +521,7 @@ class Image:
         for ann_dict in kwargs.get("annotations"):
             image_ann = ImageAnnotation.from_dict(**ann_dict)
             if "image" in ann_dict:
-                image_dict = ann_dict["image"]
-                if image_dict:
+                if image_dict := ann_dict["image"]:
                     image_ann.image = cls.from_dict(**image_dict)
             image.dump(image_ann)
         if summary_dict := kwargs.get("_summary", kwargs.get("summary")):
@@ -617,11 +609,10 @@ class Image:
             path = Path(self.location)
         if path.is_dir():
             path = path / self.image_id
-        suffix = path.suffix
-        if suffix:
+        if suffix := path.suffix:
             path_json = path.as_posix().replace(suffix, ".json")
         else:
-            path_json = path.as_posix() + ".json"
+            path_json = f"{path.as_posix()}.json"
         if highest_hierarchy_only:
             self.remove_image_from_lower_hierachy()
         export_dict = self.as_dict()

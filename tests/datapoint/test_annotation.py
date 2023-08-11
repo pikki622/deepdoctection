@@ -78,9 +78,12 @@ class TestCategoryAnnotation:
         # Assert
         if export_sub_cat_1 is not None and export_sub_cat_2 is not None:
             tmp_annotation_id_cat = "8295618a-978d-3aad-bea9-b4faa3061ab6"
-            assert export_sub_cat_1.annotation_id == get_uuid("TestType.BAK2" + tmp_annotation_id_cat)
+            assert export_sub_cat_1.annotation_id == get_uuid(
+                f"TestType.BAK2{tmp_annotation_id_cat}"
+            )
             assert export_sub_cat_2.annotation_id == get_uuid(
-                "TestType.BAZ3" + tmp_annotation_id_cat, "c822f8c3-1148-30c4-90eb-cb4896b1ebe5"
+                f"TestType.BAZ3{tmp_annotation_id_cat}",
+                "c822f8c3-1148-30c4-90eb-cb4896b1ebe5",
             )
 
     @staticmethod

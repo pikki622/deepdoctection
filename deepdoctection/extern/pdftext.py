@@ -82,8 +82,7 @@ class PdfPlumberTextDetector(PdfMiner):
                 self._page = _pdf.pages[0]
                 self._pdf_bytes = pdf_bytes
                 words = self._page.extract_words()
-        detect_results = list(map(_to_detect_result, words))
-        return detect_results
+        return list(map(_to_detect_result, words))
 
     @classmethod
     def get_requirements(cls) -> List[Requirement]:

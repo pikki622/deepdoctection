@@ -143,9 +143,7 @@ def pt_nms_image_annotations(
     class_mask = torch.ones(len(boxes), dtype=torch.uint8)
     keep = batched_nms(boxes, scores, class_mask, threshold)
     ann_ids_keep = ann_ids[keep]
-    if not isinstance(ann_ids_keep, str):
-        return ann_ids_keep.tolist()
-    return []
+    return ann_ids_keep.tolist() if not isinstance(ann_ids_keep, str) else []
 
 
 def _get_category_attributes(

@@ -400,12 +400,12 @@ def _default_segment_table(cells: List[ImageAnnotation]) -> List[SegmentationRes
     :param cells: list of all cells of one table
     :return: list of segmentation results
     """
-    raw_table_segments = []
-    for cell in cells:
-        raw_table_segments.append(
-            SegmentationResult(annotation_id=cell.annotation_id, row_num=0, col_num=0, rs=0, cs=0)
+    return [
+        SegmentationResult(
+            annotation_id=cell.annotation_id, row_num=0, col_num=0, rs=0, cs=0
         )
-    return raw_table_segments
+        for cell in cells
+    ]
 
 
 def segment_table(
@@ -1009,8 +1009,10 @@ class PubtablesSegmentationService(PipelineComponent):
                 )
                 cells_to_deactivate = []
                 for rs in range(segment_result.rs):
-                    for cs in range(segment_result.cs):
-                        cells_to_deactivate.append((segment_result.row_num + rs, segment_result.col_num + cs))
+                    cells_to_deactivate.extend(
+                        (segment_result.row_num + rs, segment_result.col_num + cs)
+                        for cs in range(segment_result.cs)
+                    )
                 for cell_position in cells_to_deactivate:
                     cell_ann_id = cell_rn_cn_to_ann_id[cell_position]
                     self.dp_manager.deactivate_annotation(cell_ann_id)

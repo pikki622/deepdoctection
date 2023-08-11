@@ -52,8 +52,7 @@ def cat_to_sub_cat(
     categories_dict = categories_dict_names_as_key
     for ann in dp.get_annotation_iter(category_names=list(cat_to_sub_cat_dict_obj_type.keys())):
         sub_cat_type = cat_to_sub_cat_dict_obj_type[get_type(ann.category_name)]
-        sub_cat = ann.get_sub_category(sub_cat_type)
-        if sub_cat:
+        if sub_cat := ann.get_sub_category(sub_cat_type):
             ann.category_name = sub_cat.category_name
             ann.category_id = categories_dict[ann.category_name]
 

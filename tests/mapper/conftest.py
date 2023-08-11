@@ -126,8 +126,6 @@ def get_always_pubtabnet_white_image_from_bytes(
     """
     Returns a white image
     """
-    if pdf_bytes and dpi is not None:
-        pass
     return DatapointPubtabnet().get_white_image("", "np")
 
 
@@ -135,8 +133,6 @@ def get_always_bytes(path: str) -> bytes:
     """
     Returns bytes
     """
-    if path:
-        pass
     return b"\x04\x00"
 
 

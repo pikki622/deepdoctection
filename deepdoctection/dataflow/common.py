@@ -30,8 +30,8 @@ class TestDataSpeed(ProxyDataFlow):
         :param warmup: warmup iterations
         """
         super().__init__(df)
-        self.test_size = int(size)
-        self.warmup = int(warmup)
+        self.test_size = size
+        self.warmup = warmup
         self._reset_called = False
 
     def reset_state(self) -> None:
@@ -263,7 +263,7 @@ class JoinData(DataFlow):
                 else:
                     dp = {}
                     for x in all_dps:
-                        dp.update(x)
+                        dp |= x
                 yield dp
         except StopIteration:  # some of them are exhausted
             pass
@@ -285,10 +285,10 @@ class BatchData(ProxyDataFlow):
                           If set to `True`, `len(ds)` must be accurate.
         """
         super().__init__(df)
-        if not remainder:
-            if batch_size > len(df):
+        if batch_size > len(df):
+            if not remainder:
                 raise ValueError("Dataflow must be larger than batch_size")
-        self.batch_size = int(batch_size)
+        self.batch_size = batch_size
         if self.batch_size <= 0:
             raise ValueError("batch_size must be a positive integer")
         self.remainder = remainder
@@ -297,9 +297,7 @@ class BatchData(ProxyDataFlow):
         df_size = len(self.df)
         div = df_size // self.batch_size
         rem = df_size % self.batch_size
-        if rem == 0:
-            return div
-        return div + int(self.remainder)
+        return div if rem == 0 else div + int(self.remainder)
 
     def __iter__(self) -> Iterator[Any]:
         holder = []

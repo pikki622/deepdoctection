@@ -70,18 +70,13 @@ class TesseractError(RuntimeError):
 
 
 def _subprocess_args() -> Dict[str, Any]:
-    # See https://github.com/pyinstaller/pyinstaller/wiki/Recipe-subprocess
-    # for reference and comments.
-
-    kwargs = {
+    return {
         "stdin": subprocess.PIPE,
         "stderr": subprocess.PIPE,
         "startupinfo": None,
         "env": environ,
         "stdout": subprocess.PIPE,
     }
-
-    return kwargs
 
 
 def _input_to_cli_str(lang: str, config: str, nice: int, input_file_name: str, output_file_name_base: str) -> List[str]:
@@ -115,7 +110,7 @@ def _run_tesseract(tesseract_args: List[str]) -> None:
         if proc.returncode:
             raise TesseractError(
                 proc.returncode,
-                " ".join(line for line in error_string.decode("utf-8").splitlines()).strip(),  # type: ignore
+                " ".join(error_string.decode("utf-8").splitlines()).strip(),
             )
 
 
@@ -140,7 +135,7 @@ def image_to_dict(image: ImageType, lang: str, config: str) -> Dict[str, List[Un
 
     with save_tmp_file(image, "tess_") as (tmp_name, input_file_name):
         _run_tesseract(_input_to_cli_str(lang, config, 0, input_file_name, tmp_name))
-        with open(tmp_name + ".tsv", "rb") as output_file:
+        with open(f"{tmp_name}.tsv", "rb") as output_file:
             output = output_file.read().decode("utf-8")
         result: Dict[str, List[Union[str, int, float]]] = {}
         rows = [row.split("\t") for row in output.strip().split("\n")]
@@ -153,9 +148,7 @@ def image_to_dict(image: ImageType, lang: str, config: str) -> Dict[str, List[Un
             # last row is missing a final cell in TSV file
             rows[-1].append("")
 
-        str_col_idx = -1
-        str_col_idx += length
-
+        str_col_idx = -1 + length
         val: Union[str, int]
         for i, head in enumerate(header):
             result[head] = []
@@ -316,13 +309,12 @@ class TesseractOcrDetector(ObjectDetector):
         :param np_img: image as numpy array
         :return: A list of DetectionResult
         """
-        detection_results = predict_text(
+        return predict_text(
             np_img,
             supported_languages=self.config.LANGUAGES,
             text_lines=self.config.LINES,
             config=config_to_cli_str(self.config, "LANGUAGES", "LINES"),
         )
-        return detection_results
 
     @classmethod
     def get_requirements(cls) -> List[Requirement]:

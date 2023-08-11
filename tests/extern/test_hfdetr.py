@@ -50,21 +50,42 @@ def get_mock_predictions() -> Dict[str, "torch.Tensor"]:
     return detr predictions
     """
 
-    outputs = {
+    return {
         "encoder_last_hidden_state": torch.ones(10, 20, 3),
         "last_hidden_state": torch.ones(1, 2, 256),
         "logits": torch.tensor(
             [
                 [
-                    [-12.0546, -10.9208, -5.9281, -7.7109, -6.0824, -7.6029, 4.9027],
-                    [-12.7695, -9.4253, -4.9289, -3.3625, -6.5684, -6.4647, 4.4205],
+                    [
+                        -12.0546,
+                        -10.9208,
+                        -5.9281,
+                        -7.7109,
+                        -6.0824,
+                        -7.6029,
+                        4.9027,
+                    ],
+                    [
+                        -12.7695,
+                        -9.4253,
+                        -4.9289,
+                        -3.3625,
+                        -6.5684,
+                        -6.4647,
+                        4.4205,
+                    ],
                 ]
             ]
         ),
-        "pred_boxes": torch.tensor([[[0.4978, 0.6739, 0.8992, 0.2794], [0.4972, 0.4949, 0.9043, 0.3606]]]),
+        "pred_boxes": torch.tensor(
+            [
+                [
+                    [0.4978, 0.6739, 0.8992, 0.2794],
+                    [0.4972, 0.4949, 0.9043, 0.3606],
+                ]
+            ]
+        ),
     }
-
-    return outputs
 
 
 def get_mock_post_process_features() -> Sequence[Dict[str, "torch.Tensor"]]:

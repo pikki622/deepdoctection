@@ -66,7 +66,7 @@ def _load_model(path_weights: str, doctr_predictor: Any, device: str) -> None:
     if pytorch_available():
         state_dict = torch.load(path_weights, map_location=device)
         for key in list(state_dict.keys()):
-            state_dict["model." + key] = state_dict.pop(key)
+            state_dict[f"model.{key}"] = state_dict.pop(key)
         doctr_predictor.load_state_dict(state_dict)
         doctr_predictor.to(device)
     elif tf_available():
@@ -95,13 +95,16 @@ def doctr_predict_text_lines(np_img: ImageType, predictor: "DetectionPredictor",
             raw_output = predictor([np_img])
     else:
         raw_output = predictor([np_img])
-    detection_results = [
+    return [
         DetectionResult(
-            box=box[:4].tolist(), class_id=1, score=box[4], absolute_coords=False, class_name=LayoutType.word
+            box=box[:4].tolist(),
+            class_id=1,
+            score=box[4],
+            absolute_coords=False,
+            class_name=LayoutType.word,
         )
         for box in raw_output[0]
     ]
-    return detection_results
 
 
 def doctr_predict_text(
@@ -124,10 +127,10 @@ def doctr_predict_text(
             raw_output = predictor(list(images))
     else:
         raw_output = predictor(list(images))
-    detection_results = [
-        DetectionResult(score=output[1], text=output[0], uuid=uuid) for uuid, output in zip(uuids, raw_output)
+    return [
+        DetectionResult(score=output[1], text=output[0], uuid=uuid)
+        for uuid, output in zip(uuids, raw_output)
     ]
-    return detection_results
 
 
 class DoctrTextlineDetector(ObjectDetector):
@@ -193,8 +196,7 @@ class DoctrTextlineDetector(ObjectDetector):
         :param np_img: image as numpy array
         :return: A list of DetectionResult
         """
-        detection_results = doctr_predict_text_lines(np_img, self.doctr_predictor, self.device)
-        return detection_results
+        return doctr_predict_text_lines(np_img, self.doctr_predictor, self.device)
 
     @classmethod
     def get_requirements(cls) -> List[Requirement]:

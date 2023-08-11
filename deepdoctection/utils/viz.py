@@ -323,7 +323,7 @@ def interactive_imshow(
     while key >= 128:
         key = cv2.waitKey(-1)
     key = chr(key & 0xFF)
-    cb_name = "key_cb_" + key
+    cb_name = f"key_cb_{key}"
     if cb_name in kwargs:
         kwargs[cb_name](img)
     elif key == "q":
@@ -332,7 +332,7 @@ def interactive_imshow(
         sys.exit()
     elif key == "s":
         cv2.imwrite("out.png", img)
-    elif key in ["+", "="]:
+    elif key in {"+", "="}:
         img = cv2.resize(img, None, fx=1.3, fy=1.3, interpolation=cv2.INTER_CUBIC)
         interactive_imshow(img, lclick_cb, rclick_cb, **kwargs)
     elif key == "-":

@@ -156,9 +156,7 @@ class WhiteImage:
         """
         if type_id == "d":
             return get_uuid(cls.loc + cls.file_name)
-        if type_id == "n":
-            return get_uuid(cls.external_id)
-        return cls.uuid
+        return get_uuid(cls.external_id) if type_id == "n" else cls.uuid
 
     def get_image_as_b64_string(self) -> str:
         """
@@ -199,9 +197,7 @@ class CatAnn:
         :param type: "n" (no external uuid), "u" (external uuid)
         :return: Annotation as uuid
         """
-        if type_id == "n":
-            return get_uuid(cls.external_id)
-        return cls.uuid
+        return get_uuid(cls.external_id) if type_id == "n" else cls.uuid
 
 
 @fixture(name="category_ann")

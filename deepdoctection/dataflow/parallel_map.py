@@ -63,16 +63,14 @@ def _zmq_catch_error(name):
 def _get_pipe_name(name):
     if sys.platform.startswith("linux"):
         # linux supports abstract sockets: http://api.zeromq.org/4-1:zmq-ipc
-        pipename = f"ipc://@{name}-pipe-{str(uuid.uuid1())[:8]}"
-    else:
-        pipedir = "."
-        if not os.path.isdir(pipedir):
-            raise NotADirectoryError(pipedir)
-        filename = f"{pipedir.rstrip('/')}/{name}-pipe-{str(uuid.uuid1())[:6]}"
-        if os.path.exists(filename):
-            raise FileExistsError(filename)
-        pipename = f"ipc://{filename}"
-    return pipename
+        return f"ipc://@{name}-pipe-{str(uuid.uuid1())[:8]}"
+    pipedir = "."
+    if not os.path.isdir(pipedir):
+        raise NotADirectoryError(pipedir)
+    filename = f"{pipedir.rstrip('/')}/{name}-pipe-{str(uuid.uuid1())[:6]}"
+    if os.path.exists(filename):
+        raise FileExistsError(filename)
+    return f"ipc://{filename}"
 
 
 class _ParallelMapData(ProxyDataFlow, ABC):
@@ -86,10 +84,7 @@ class _ParallelMapData(ProxyDataFlow, ABC):
 
     def reset_state(self) -> None:
         super().reset_state()
-        if not self._strict:
-            df = RepeatedData(self.df, -1)
-        else:
-            df = self.df  # type: ignore
+        df = RepeatedData(self.df, -1) if not self._strict else self.df
         self._iter = iter(df)
 
     @no_type_check
@@ -197,9 +192,7 @@ class MultiThreadMapData(_ParallelMapData):
                     obj = self.func(dp)
                     self.queue_put_stoppable(self.outq, obj)
             except Exception:  # pylint: disable=W0703
-                if self.stopped():
-                    pass  # skip duplicated error messages
-                else:
+                if not self.stopped():
                     raise
             finally:
                 self.stop()
@@ -431,8 +424,7 @@ class MultiProcessMapData(_ParallelMapData, _MultiProcessZMQDataFlow):
     @no_type_check
     def _recv(self):
         msg = self.socket.recv_multipart(copy=False)
-        dp = PickleSerializer.loads(msg[1])
-        return dp
+        return PickleSerializer.loads(msg[1])
 
     def __iter__(self) -> Iterator[Any]:
         with self._guard, _zmq_catch_error(type(self).__name__):

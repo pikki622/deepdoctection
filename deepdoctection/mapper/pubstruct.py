@@ -55,8 +55,11 @@ def _convert_boxes(dp: JsonDict, height: int) -> JsonDict:
 def _get_table_annotation(dp: JsonDict, category_id: str) -> ImageAnnotation:
     ulx, uly, lrx, lry = list(map(float, dp["bbox"]))
     bbox = BoundingBox(absolute_coords=True, ulx=ulx, uly=uly, lrx=lrx, lry=lry)
-    annotation = ImageAnnotation(category_name=LayoutType.table, bounding_box=bbox, category_id=category_id)
-    return annotation
+    return ImageAnnotation(
+        category_name=LayoutType.table,
+        bounding_box=bbox,
+        category_id=category_id,
+    )
 
 
 def _cell_token(html: Sequence[str]) -> List[List[int]]:
@@ -73,20 +76,19 @@ def _cell_token(html: Sequence[str]) -> List[List[int]]:
 
 
 def _item_spans(html: Sequence[str], index_cells: Sequence[Sequence[int]], item: str) -> List[List[int]]:
-    item_spans = [
+    return [
         [
-            int(html[index_cell - 1].replace(item + "=", "").replace('"', ""))
+            int(html[index_cell - 1].replace(f"{item}=", "").replace('"', ""))
             if (item in html[index_cell - 1] and html[index_cell] == ">")
-            else (
-                int(html[index_cell - 2].replace(item + "=", "").replace('"', ""))
-                if (item in html[index_cell - 2] and html[index_cell] == ">")
-                else 1
+            else int(
+                html[index_cell - 2].replace(f"{item}=", "").replace('"', "")
             )
+            if (item in html[index_cell - 2] and html[index_cell] == ">")
+            else 1
             for index_cell in index_cell_per_row
         ]
         for index_cell_per_row in index_cells
     ]
-    return item_spans
 
 
 def _end_of_header(html: Sequence[str]) -> int:
@@ -117,11 +119,10 @@ def tile_table(row_spans: Sequence[Sequence[int]], col_spans: Sequence[Sequence[
     for row in col_spans:
         cell_id_per_row = []
         for idx, k in enumerate(itertools.count(i)):
-            if idx < len(row):
-                i += 1
-                cell_id_per_row.append(k)
-            else:
+            if idx >= len(row):
                 break
+            i += 1
+            cell_id_per_row.append(k)
         cell_ids.append(cell_id_per_row)
 
     tiling = [[-1] * number_of_cols for _ in range(number_of_rows)]  # initialize placeholders
@@ -137,15 +138,14 @@ def tile_table(row_spans: Sequence[Sequence[int]], col_spans: Sequence[Sequence[
             else:
                 col = len(tiling[row_id]) - tiling[row_id].count(-1)
             # tile the cell
-            for rs in range(row_span):
-                for cs in range(col_span):
-                    if rs >= 1 and cs == 0:  # if rowSpan>=2 every row below needs to be filled with trailing 0
-                        fill = 0
-                        while fill < col:
-                            if tiling[row_id + rs][fill] == -1:
-                                tiling[row_id + rs][fill] = 0
-                            fill += 1
-                    tiling[row_id + rs][col + cs] = cell_id
+            for rs, cs in itertools.product(range(row_span), range(col_span)):
+                if rs >= 1 and cs == 0:  # if rowSpan>=2 every row below needs to be filled with trailing 0
+                    fill = 0
+                    while fill < col:
+                        if tiling[row_id + rs][fill] == -1:
+                            tiling[row_id + rs][fill] = 0
+                        fill += 1
+                tiling[row_id + rs][col + cs] = cell_id
 
     np.array(tiling, dtype=np.int32)
     return tiling
@@ -172,8 +172,12 @@ def _add_items(image: Image, item_type: str, categories_name_as_key: Dict[str, s
                 lambda x: x.get_sub_category(item_number).category_id == str(item_num), cells  # pylint: disable=W0640
             )
         )
-        cell_item = list(filter(lambda x: x.get_sub_category(item_span).category_id == "1", cell_item))
-        if cell_item:
+        if cell_item := list(
+            filter(
+                lambda x: x.get_sub_category(item_span).category_id == "1",
+                cell_item,
+            )
+        ):
             ulx = min(cell.bounding_box.ulx for cell in cell_item if isinstance(cell.bounding_box, BoundingBox))
 
             uly = min(cell.bounding_box.uly for cell in cell_item if isinstance(cell.bounding_box, BoundingBox))
@@ -188,12 +192,11 @@ def _add_items(image: Image, item_type: str, categories_name_as_key: Dict[str, s
                     raise ValueError("pubtables_like = True requires table")
                 table = tables[0]
 
-                if item_type == LayoutType.row:
-                    if table.bounding_box:
+                if table.bounding_box:
+                    if item_type == LayoutType.row:
                         ulx = table.bounding_box.ulx + 1.0
                         lrx = table.bounding_box.lrx - 1.0
-                else:
-                    if table.bounding_box:
+                    else:
                         uly = table.bounding_box.uly + 1.0
                         lry = table.bounding_box.lry - 1.0
 
@@ -218,22 +221,13 @@ def _add_items(image: Image, item_type: str, categories_name_as_key: Dict[str, s
             tmp_item_xy = table.bounding_box.uly + 1.0 if item_type == LayoutType.row else table.bounding_box.ulx + 1.0
         for idx, item in enumerate(item_type_anns):
             with MappingContextManager(
-                dp_name=image.file_name,
-                filter_level="bounding box",
-                image_annotation={"category_name": item.category_name, "annotation_id": item.annotation_id},
-            ):
-                box = item.bounding_box
-                if box:
+                            dp_name=image.file_name,
+                            filter_level="bounding box",
+                            image_annotation={"category_name": item.category_name, "annotation_id": item.annotation_id},
+                        ):
+                if box := item.bounding_box:
                     tmp_next_item_xy = 0.0
-                    if idx != len(item_type_anns) - 1:
-                        next_box = item_type_anns[idx + 1].bounding_box
-                        if next_box:
-                            tmp_next_item_xy = (
-                                (box.lry + next_box.uly) / 2
-                                if item_type == LayoutType.row
-                                else (box.lrx + next_box.ulx) / 2
-                            )
-                    else:
+                    if idx == len(item_type_anns) - 1:
                         if table.bounding_box:
                             tmp_next_item_xy = (
                                 table.bounding_box.lry - 1.0
@@ -241,6 +235,12 @@ def _add_items(image: Image, item_type: str, categories_name_as_key: Dict[str, s
                                 else table.bounding_box.lrx - 1.0
                             )
 
+                    elif next_box := item_type_anns[idx + 1].bounding_box:
+                        tmp_next_item_xy = (
+                            (box.lry + next_box.uly) / 2
+                            if item_type == LayoutType.row
+                            else (box.lrx + next_box.ulx) / 2
+                        )
                     new_embedding_box = BoundingBox(
                         ulx=box.ulx if item_type == LayoutType.row else tmp_item_xy,
                         uly=tmp_item_xy if item_type == LayoutType.row else box.uly,
@@ -266,9 +266,7 @@ def row_col_cell_ids(tiling: List[List[int]]) -> List[Tuple[int, int, int]]:
         [(i + 1, j + 1, cell_id) for i, row in enumerate(tiling) for j, cell_id in enumerate(row)], key=lambda x: x[2]
     )
     seen = set()
-    rows_col_cell_ids = [(a, b, c) for a, b, c in indices if not (c in seen or seen.add(c))]  # type: ignore
-
-    return rows_col_cell_ids
+    return [(a, b, c) for a, b, c in indices if not (c in seen or seen.add(c))]
 
 
 def embedding_in_image(dp: Image, html: List[str], categories_name_as_key: Dict[str, str]) -> Image:
@@ -282,7 +280,11 @@ def embedding_in_image(dp: Image, html: List[str], categories_name_as_key: Dict[
     :param categories_name_as_key: category dictionary with all possible annotations
     :return: Image
     """
-    image = Image(file_name=dp.file_name, location=dp.location, external_id=dp.image_id + "image")
+    image = Image(
+        file_name=dp.file_name,
+        location=dp.location,
+        external_id=f"{dp.image_id}image",
+    )
     image.image = dp.image
     image.set_width_height(dp.width, dp.height)
     table_ann = ImageAnnotation(
@@ -364,7 +366,7 @@ def pub_to_image_uncur(  # pylint: disable=R0914
     if not idx:
         idx = dp.get("table_id", "")
 
-    with MappingContextManager(str(idx) + " is malformed") as transforming_context:
+    with MappingContextManager(f"{str(idx)} is malformed") as transforming_context:
         html = dp["html"]["structure"]["tokens"]
         index_cells = _cell_token(html)
         col_spans = _item_spans(html, index_cells, "colspan")
@@ -495,11 +497,10 @@ def pub_to_image_uncur(  # pylint: disable=R0914
                     image.dump(word)
                     cell_ann.dump_relationship(Relationships.child, word.annotation_id)
 
-                    index = nth_index(html, "<td>", number_of_cells - idx)
-                    if index:
+                    if index := nth_index(html, "<td>", number_of_cells - idx):
                         html.insert(index + 1, cell_ann.annotation_id)
 
-        summary_ann = SummaryAnnotation(external_id=image.image_id + "SUMMARY")
+        summary_ann = SummaryAnnotation(external_id=f"{image.image_id}SUMMARY")
         summary_ann.dump_sub_category(
             TableType.number_of_rows,
             CategoryAnnotation(category_name=TableType.number_of_rows, category_id=str(number_of_rows)),
@@ -529,9 +530,7 @@ def pub_to_image_uncur(  # pylint: disable=R0914
         if dd_pipe_like:
             image = embedding_in_image(image, html, categories_name_as_key)
 
-    if mapping_context.context_error:
-        return None
-    return image
+    return None if mapping_context.context_error else image
 
 
 pub_to_image = curry(pub_to_image_uncur)  # using curry as decorator is not possible as picking will

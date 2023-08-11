@@ -85,7 +85,7 @@ class MappingContextManager:
             for key, value in self.kwargs.items():
                 if isinstance(value, dict):
                     log_dict["type"] = key
-                    log_dict.update(value)
+                    log_dict |= value
             logger.warning("MappingContextManager error. Will filter %s", self.filter_level, log_dict)
             return True
         if exc_type is None:
@@ -157,9 +157,7 @@ def maybe_get_fake_score(add_fake_score: bool) -> Optional[float]:
     :param add_fake_score: boolean
     :return: A uniform random variable in (0,1)
     """
-    if add_fake_score:
-        return np.random.uniform(0.0, 1.0, 1)[0]
-    return None
+    return np.random.uniform(0.0, 1.0, 1)[0] if add_fake_score else None
 
 
 class LabelSummarizer:

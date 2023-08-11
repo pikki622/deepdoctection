@@ -95,9 +95,7 @@ class SerializerJsonlines:
         with open(os.path.join(path, file_name), "w") as file:  # pylint: disable=W1514
             writer = Writer(file)
             for k, dp in enumerate(df):
-                if max_datapoints is None:
-                    writer.write(dp)
-                elif k < max_datapoints:
+                if max_datapoints is None or k < max_datapoints:
                     writer.write(dp)
                 else:
                     break
@@ -148,9 +146,7 @@ class SerializerTabsepFiles:
 
         with open(os.path.join(path, file_name), "w", encoding="UTF-8") as file:
             for k, dp in enumerate(df):
-                if max_datapoints is None:
-                    file.write(dp)
-                elif k < max_datapoints:
+                if max_datapoints is None or k < max_datapoints:
                     file.write(dp)
                 else:
                     break
@@ -311,7 +307,7 @@ class CocoParser:
         if len(img_ids) == len(cat_ids) == len(area_range) == 0:
             anns = self.dataset["annotations"]
         else:
-            if not len(img_ids) == 0:
+            if len(img_ids) != 0:
                 lists = [self.img_to_anns[img_id] for img_id in img_ids if img_id in self.img_to_anns]
                 anns = list(itertools.chain.from_iterable(lists))
             else:
@@ -320,11 +316,11 @@ class CocoParser:
             anns = (
                 anns if len(area_range) == 0 else [ann for ann in anns if area_range[0] < ann["area"] < area_range[1]]
             )
-        if is_crowd is not None:
-            ids = [ann["id"] for ann in anns if ann["iscrowd"] == is_crowd]
-        else:
-            ids = [ann["id"] for ann in anns]
-        return ids
+        return (
+            [ann["id"] for ann in anns if ann["iscrowd"] == is_crowd]
+            if is_crowd is not None
+            else [ann["id"] for ann in anns]
+        )
 
     def get_cat_ids(
         self,
@@ -353,10 +349,13 @@ class CocoParser:
         super_category_names = [super_category_names] if isinstance(super_category_names, str) else super_category_names
         category_ids = [category_ids] if isinstance(category_ids, int) else category_ids
 
-        if len(category_names) == len(super_category_names) == len(category_ids) == 0:
-            cats = self.dataset["categories"]
-        else:
-            cats = self.dataset["categories"]
+        cats = self.dataset["categories"]
+        if (
+            not len(category_names)
+            == len(super_category_names)
+            == len(category_ids)
+            == 0
+        ):
             cats = cats if len(category_names) == 0 else [cat for cat in cats if cat["name"] in category_names]
             cats = (
                 cats
@@ -364,8 +363,7 @@ class CocoParser:
                 else [cat for cat in cats if cat["supercategory"] in super_category_names]
             )
             cats = cats if len(category_ids) == 0 else [cat for cat in cats if cat["id"] in category_ids]
-        ids = [cat["id"] for cat in cats]
-        return ids
+        return [cat["id"] for cat in cats]
 
     def get_image_ids(
         self, img_ids: Optional[Union[int, Sequence[int]]] = None, cat_ids: Optional[Union[int, Sequence[int]]] = None
@@ -485,8 +483,7 @@ class SerializerCoco:
                     img["annotations"] = coco.img_to_anns[img["id"]]
                     status_bar.update()
 
-        df = CustomDataFromList(imgs, max_datapoints=max_datapoints)
-        return df
+        return CustomDataFromList(imgs, max_datapoints=max_datapoints)
 
     @staticmethod
     def save() -> None:
@@ -528,7 +525,7 @@ class SerializerPdfDoc:
             df,
             lambda dp: {
                 "path": path,
-                "file_name": prefix + f"_{dp[1]}" + suffix,
+                "file_name": f"{prefix}_{dp[1]}{suffix}",
                 "pdf_bytes": dp[0],
                 "page_number": dp[1],
                 "document_id": get_uuid_from_str(prefix),

@@ -148,10 +148,11 @@ class TPFrcnnDetector(TensorpackPredictor, ObjectDetector):
         filtered_detection_result: List[DetectionResult] = []
         for result in detection_results:
             result.class_name = self._model.cfg.DATA.CLASS_DICT[str(result.class_id)]
-            if self.filter_categories:
-                if result.class_name not in self.filter_categories:
-                    filtered_detection_result.append(result)
-            else:
+            if (
+                self.filter_categories
+                and result.class_name not in self.filter_categories
+                or not self.filter_categories
+            ):
                 filtered_detection_result.append(result)
         return filtered_detection_result
 

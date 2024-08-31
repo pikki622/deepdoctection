@@ -36,9 +36,7 @@ if boto3_available():
 
 def _textract_to_detectresult(response: JsonDict, width: int, height: int, text_lines: bool) -> List[DetectionResult]:
     all_results: List[DetectionResult] = []
-    blocks = response.get("Blocks")
-
-    if blocks:
+    if blocks := response.get("Blocks"):
         for block in blocks:
             if (block["BlockType"] in "WORD") or (block["BlockType"] in "LINE" and text_lines):
                 word = DetectionResult(
@@ -58,7 +56,7 @@ def _textract_to_detectresult(response: JsonDict, width: int, height: int, text_
     return all_results
 
 
-def predict_text(np_img: ImageType, client, text_lines: bool) -> List[DetectionResult]:  # type: ignore
+def predict_text(np_img: ImageType, client, text_lines: bool) -> List[DetectionResult]:    # type: ignore
     """
     Calls AWS Textract client (`detect_document_text`) and returns plain OCR results.
     AWS account required.
@@ -86,8 +84,7 @@ def predict_text(np_img: ImageType, client, text_lines: bool) -> List[DetectionR
         logger.warning("botocore InvalidParameterException", log_dict)
         response = {}
 
-    all_results = _textract_to_detectresult(response, width, height, text_lines)
-    return all_results
+    return _textract_to_detectresult(response, width, height, text_lines)
 
 
 class TextractOcrDetector(ObjectDetector):

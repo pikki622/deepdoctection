@@ -39,12 +39,11 @@ class DataFromList(RNGDataFlow):
             yield from self.lst
         else:
             idxs = np.arange(len(self.lst))
-            if self.rng is not None:
-                self.rng.shuffle(idxs)
-                for k in idxs:
-                    yield self.lst[k]
-            else:
+            if self.rng is None:
                 raise DataFlowResetStateNotCalled()
+            self.rng.shuffle(idxs)
+            for k in idxs:
+                yield self.lst[k]
 
 
 class DataFromIterable(DataFlow):
@@ -95,7 +94,7 @@ class FakeData(RNGDataFlow):
 
         super().__init__()
         self.shapes = shapes
-        self._size = int(size)
+        self._size = size
         self.random = random
         self.dtype = [dtype] * len(shapes) if isinstance(dtype, str) else dtype
         self.domain = [domain] * len(shapes) if isinstance(domain, tuple) else domain

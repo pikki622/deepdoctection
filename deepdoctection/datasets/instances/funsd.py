@@ -60,7 +60,7 @@ def load_file(path_ann: Pathlike) -> JsonDict:
     path, file_name = os.path.split(path_ann)
     base_path, _ = os.path.split(path)
     path = os.path.join(base_path, "images")
-    anns["file_name"] = os.path.join(path, file_name[:-4] + "png")
+    anns["file_name"] = os.path.join(path, f"{file_name[:-4]}png")
     return anns
 
 

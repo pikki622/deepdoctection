@@ -45,10 +45,7 @@ class CustomResize(ImageAugmentor):
         h, w = img.shape[:2]
         size = self.rng.randint(self.short_edge_length[0], self.short_edge_length[1] + 1)
         scale = size * 1.0 / min(h, w)
-        if h < w:
-            new_h, new_w = size, scale * w
-        else:
-            new_h, new_w = scale * h, size
+        new_h, new_w = (size, scale * w) if h < w else (scale * h, size)
         if max(new_h, new_w) > self.max_size:
             scale = self.max_size * 1.0 / max(new_h, new_w)
             new_h = new_h * scale
@@ -70,7 +67,7 @@ def polygons_to_mask(polys, height, width, intersect=False):
     """
 
     polys = [p.flatten().tolist() for p in polys]
-    assert len(polys) > 0, "Polygons are empty!"
+    assert polys, "Polygons are empty!"
 
     rles = coco_mask.frPyObjects(polys, height, width)
     rle = coco_mask.merge(rles, intersect)

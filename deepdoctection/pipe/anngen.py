@@ -173,9 +173,7 @@ class DatapointManager:
             if to_image and to_annotation_id is None:
                 self.datapoint.image_ann_to_image(annotation_id=ann.annotation_id, crop_image=crop_image)
 
-        if annotation_context.context_error:
-            return None
-        return ann.annotation_id
+        return None if annotation_context.context_error else ann.annotation_id
 
     def set_category_annotation(
         self,
@@ -207,9 +205,7 @@ class DatapointManager:
         ) as annotation_context:
             cat_ann = CategoryAnnotation(category_name=category_name, category_id=str(category_id), score=score)
             self._cache_anns[annotation_id].dump_sub_category(sub_cat_key, cat_ann)
-        if annotation_context.context_error:
-            return None
-        return cat_ann.annotation_id
+        return None if annotation_context.context_error else cat_ann.annotation_id
 
     def set_container_annotation(
         self,
@@ -246,9 +242,7 @@ class DatapointManager:
                 category_name=category_name, category_id=str(category_id), value=value, score=score
             )
             self._cache_anns[annotation_id].dump_sub_category(sub_cat_key, cont_ann)
-        if annotation_context.context_error:
-            return None
-        return cont_ann.annotation_id
+        return None if annotation_context.context_error else cont_ann.annotation_id
 
     def set_summary_annotation(
         self,
@@ -304,9 +298,7 @@ class DatapointManager:
                 )
             image.summary.dump_sub_category(summary_key, ann, image.image_id)
 
-        if annotation_context.context_error:
-            return None
-        return ann.annotation_id
+        return None if annotation_context.context_error else ann.annotation_id
 
     def deactivate_annotation(self, annotation_id: str) -> None:
         """

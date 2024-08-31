@@ -150,10 +150,7 @@ class HFDetrDerivedDetector(ObjectDetector):
         self.hf_detr_predictor = self.set_model(path_weights)
         self.feature_extractor = self.set_pre_processor()
 
-        if device is not None:
-            self.device = device
-        else:
-            self.device = set_torch_auto_device()
+        self.device = device if device is not None else set_torch_auto_device()
         self.hf_detr_predictor.to(self.device)
         if filter_categories:
             filter_categories = [get_type(cat) for cat in filter_categories]
@@ -201,12 +198,12 @@ class HFDetrDerivedDetector(ObjectDetector):
             result.class_name = self.categories[str(result.class_id + 1)]  # type: ignore
             if isinstance(result.class_id, int):
                 result.class_id += 1
-            if self.filter_categories:
-                if result.class_name not in self.filter_categories:
-                    filtered_detection_result.append(result)
-            else:
+            if (
+                self.filter_categories
+                and result.class_name not in self.filter_categories
+                or not self.filter_categories
+            ):
                 filtered_detection_result.append(result)
-
         return filtered_detection_result
 
     @classmethod

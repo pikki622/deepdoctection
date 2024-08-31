@@ -218,7 +218,7 @@ class Table(Layout):
         A list of a table cells.
         """
         all_relation_ids = self.get_relationship(Relationships.child)
-        cell_anns = self.base_page.get_annotation(
+        return self.base_page.get_annotation(
             annotation_ids=all_relation_ids,
             category_names=[
                 LayoutType.cell,
@@ -230,7 +230,6 @@ class Table(Layout):
                 CellType.column_header,
             ],
         )
-        return cell_anns
 
     @property
     def rows(self) -> List[ImageAnnotationBaseView]:
@@ -238,8 +237,9 @@ class Table(Layout):
         A list of a table rows.
         """
         all_relation_ids = self.get_relationship(Relationships.child)
-        row_anns = self.base_page.get_annotation(annotation_ids=all_relation_ids, category_names=[LayoutType.row])
-        return row_anns
+        return self.base_page.get_annotation(
+            annotation_ids=all_relation_ids, category_names=[LayoutType.row]
+        )
 
     @property
     def columns(self) -> List[ImageAnnotationBaseView]:
@@ -247,8 +247,9 @@ class Table(Layout):
         A list of a table columns.
         """
         all_relation_ids = self.get_relationship(Relationships.child)
-        col_anns = self.base_page.get_annotation(annotation_ids=all_relation_ids, category_names=[LayoutType.column])
-        return col_anns
+        return self.base_page.get_annotation(
+            annotation_ids=all_relation_ids, category_names=[LayoutType.column]
+        )
 
     @property
     def html(self) -> str:
@@ -294,8 +295,7 @@ class Table(Layout):
         return table_list
 
     def __str__(self) -> str:
-        out = " ".join([" ".join(row + ["\n"]) for row in self.csv])
-        return out
+        return " ".join([" ".join(row + ["\n"]) for row in self.csv])
 
     @property
     def text(self) -> str:
@@ -535,8 +535,7 @@ class Page(Image):
             image_ann = ImageAnnotation.from_dict(**ann_dict)
             layout_ann = ann_obj_view_factory(image_ann, text_container)
             if "image" in ann_dict:
-                image_dict = ann_dict["image"]
-                if image_dict:
+                if image_dict := ann_dict["image"]:
                     image = Image.from_dict(**image_dict)
                     layout_ann.image = cls.from_image(
                         image, text_container, floating_text_block_categories, base_page=page
@@ -555,11 +554,9 @@ class Page(Image):
         return blocks_with_order
 
     def _make_text(self, line_break: bool = True) -> str:
-        text: str = ""
         block_with_order = self._order("layouts")
         break_str = "\n" if line_break else " "
-        for block in block_with_order:
-            text += f"{block.text}{break_str}"
+        text: str = "".join(f"{block.text}{break_str}" for block in block_with_order)
         return text
 
     @property
@@ -600,20 +597,18 @@ class Page(Image):
         for table in self.tables:
             if table.reading_order:
                 block_with_order.append(table)
-        all_chunks = []
-        for chunk in block_with_order:
-            all_chunks.append(
-                (
-                    self.document_id,
-                    self.image_id,
-                    self.page_number,
-                    chunk.annotation_id,
-                    chunk.reading_order,
-                    chunk.category_name,
-                    chunk.text,
-                )
+        return [
+            (
+                self.document_id,
+                self.image_id,
+                self.page_number,
+                chunk.annotation_id,
+                chunk.reading_order,
+                chunk.category_name,
+                chunk.text,
             )
-        return all_chunks  # type: ignore
+            for chunk in block_with_order
+        ]
 
     @property
     def text_no_line_break(self) -> str:
@@ -705,21 +700,19 @@ class Page(Image):
                 all_words.extend(layout.words)
             if not all_words:
                 all_words = self.get_annotation(category_names=LayoutType.word)
-            if not ignore_default_token_class:
-                for word in all_words:
+            for word in all_words:
+                if not ignore_default_token_class:
                     box_stack.append(word.bbox)
                     if show_token_class:
                         category_names_list.append(word.token_class.value if word.token_class is not None else None)
                     else:
                         category_names_list.append(word.token_tag.value if word.token_tag is not None else None)
-            else:
-                for word in all_words:
-                    if word.token_class is not None and word.token_class != TokenClasses.other:
-                        box_stack.append(word.bbox)
-                        if show_token_class:
-                            category_names_list.append(word.token_class.value if word.token_class is not None else None)
-                        else:
-                            category_names_list.append(word.token_tag.value if word.token_tag is not None else None)
+                elif word.token_class is not None and word.token_class != TokenClasses.other:
+                    box_stack.append(word.bbox)
+                    if show_token_class:
+                        category_names_list.append(word.token_class.value if word.token_class is not None else None)
+                    else:
+                        category_names_list.append(word.token_tag.value if word.token_tag is not None else None)
 
         if self.image is not None:
             if box_stack:

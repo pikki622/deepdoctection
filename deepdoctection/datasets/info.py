@@ -243,10 +243,7 @@ class DatasetCategories:
                             if pos == val:
                                 sub_cat_dict_key = self.init_sub_categories[key]
                                 sub_cat_list = sub_cat_dict_key.get(cat)
-                                if sub_cat_list is None:
-                                    sub_cat[cat] = []
-                                else:
-                                    sub_cat[cat] = list(copy(sub_cat_list))
+                                sub_cat[cat] = [] if sub_cat_list is None else list(copy(sub_cat_list))
             else:
                 sub_cat[cat] = list(sub_cat_dict.keys())
         if not keys:
@@ -353,17 +350,13 @@ class DatasetCategories:
         """
         returns `True` if a category is replaced with sub categories
         """
-        if self._cat_to_sub_cat is not None:
-            return True
-        return False
+        return self._cat_to_sub_cat is not None
 
     def is_filtered(self) -> bool:
         """
         return `True` if categories are filtered
         """
-        if hasattr(self, "_categories_filter_update"):
-            return True
-        return False
+        return bool(hasattr(self, "_categories_filter_update"))
 
     def _init_sanity_check(self) -> None:
         # all values of possible sub categories must be listed

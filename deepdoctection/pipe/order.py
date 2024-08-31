@@ -527,8 +527,7 @@ class TextOrderService(PipelineComponent):
         )
         line_anns = []
         for detect_result in detection_result_list:
-            ann_id = self.dp_manager.set_image_annotation(detect_result)
-            if ann_id:
+            if ann_id := self.dp_manager.set_image_annotation(detect_result):
                 line_ann = self.dp_manager.get_annotation(ann_id)
                 child_ann_id_list = detect_result.relationships["child"]  # type: ignore
                 for child_ann_id in child_ann_id_list:

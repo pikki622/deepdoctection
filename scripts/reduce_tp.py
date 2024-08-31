@@ -48,5 +48,5 @@ if __name__ == '__main__':
     file_name,_ = file_name.split(".")
     tp_dict = load_checkpoint_vars(path_model)
     reduce_model(tp_dict)
-    path_target = path + "/" + file_name + "_inf_only"
+    path_target = f"{path}/{file_name}_inf_only"
     save_checkpoint_vars(tp_dict, path_target)

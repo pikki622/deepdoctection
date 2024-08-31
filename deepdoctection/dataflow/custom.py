@@ -150,22 +150,23 @@ class CustomDataFromList(DataFromList):
             idxs = np.arange(len(lst_tmp))
             self.rng.shuffle(idxs)
             for idx, k in enumerate(idxs):
-                if self.max_datapoints is not None:
-                    if idx < self.max_datapoints:
-                        yield lst_tmp[k]
-                    else:
-                        break
-                else:
+                if (
+                    self.max_datapoints is not None
+                    and idx < self.max_datapoints
+                    or self.max_datapoints is None
+                ):
                     yield lst_tmp[k]
+                else:
+                    break
+        elif self.max_datapoints is None:
+            yield from lst_tmp
+
         else:
-            if self.max_datapoints is not None:
-                for k, _ in enumerate(lst_tmp):
-                    if k < self.max_datapoints:
-                        yield lst_tmp[k]
-                    else:
-                        break
-            else:
-                yield from lst_tmp
+            for k, _ in enumerate(lst_tmp):
+                if k < self.max_datapoints:
+                    yield lst_tmp[k]
+                else:
+                    break
 
 
 class CustomDataFromIterable(DataFromIterable):

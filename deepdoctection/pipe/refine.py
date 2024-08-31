@@ -63,10 +63,9 @@ def tiles_to_cells(dp: Image, table: ImageAnnotation) -> List[Tuple[Tuple[int, i
         col_number = int(cell.get_sub_category(CellType.column_number).category_id)
         rs = int(cell.get_sub_category(CellType.row_span).category_id)
         cs = int(cell.get_sub_category(CellType.column_span).category_id)
-        for k in range(rs):
-            for l in range(cs):
-                assert cell.annotation_id is not None, cell.annotation_id
-                tile_to_cells.append(((row_number + k, col_number + l), cell.annotation_id))
+        for k, l in product(range(rs), range(cs)):
+            assert cell.annotation_id is not None, cell.annotation_id
+            tile_to_cells.append(((row_number + k, col_number + l), cell.annotation_id))
 
     return tile_to_cells
 
@@ -84,7 +83,7 @@ def connected_component_tiles(
              assigned list of cell ids as values.
     """
     cell_to_tile_list = [(cell_position[1], cell_position[0]) for cell_position in tile_to_cell_list]
-    cells = set(tup[0] for tup in cell_to_tile_list)
+    cells = {tup[0] for tup in cell_to_tile_list}
 
     tile_to_cell_dict = defaultdict(list)
     for key, val in tile_to_cell_list:
@@ -95,7 +94,7 @@ def connected_component_tiles(
         cell_to_tile_dict[key].append(val)
 
     cell_to_edges = defaultdict(list)
-    for key, _ in tile_to_cell_dict.items():
+    for key in tile_to_cell_dict:
         cell_to_edges[key].extend(
             list(set(product(tile_to_cell_dict[key], tile_to_cell_dict[key])))  # pylint: disable=R1733
         )
@@ -122,20 +121,20 @@ def _missing_tile(inputs: Set[Tuple[int, int]]) -> Optional[Tuple[int, int]]:
         max(a[1] for a in inputs),
     )
 
-    for x in range(min_x, max_x):
-        for y in range(min_y, max_y):
-            if (x, y) not in inputs:
-                return (x, y)
-    return None
+    return next(
+        (
+            (x, y)
+            for x, y in product(range(min_x, max_x), range(min_y, max_y))
+            if (x, y) not in inputs
+        ),
+        None,
+    )
 
 
 def _find_component(
     tile: Tuple[int, int], reduced_connected_tiles: List[Set[Tuple[int, int]]]
 ) -> Optional[Set[Tuple[int, int]]]:
-    for comp in reduced_connected_tiles:
-        if tile in comp:
-            return comp
-    return None
+    return next((comp for comp in reduced_connected_tiles if tile in comp), None)
 
 
 def _merge_components(reduced_connected_tiles: List[Set[Tuple[int, int]]]) -> List[Set[Tuple[int, int]]]:
@@ -215,9 +214,7 @@ def _html_cell(
     Html table cell string generation
     """
     html = ["<td"]
-    if not cell_position:
-        pass
-    else:
+    if cell_position:
         if cell_position[2] != 1:
             html.append(f" rowspan={cell_position[2]}")
         if cell_position[3] != 1:
@@ -232,8 +229,7 @@ def _html_cell(
             )
     html.append(">")
     str_html = "".join(html)
-    html_list = [str_html, "</td>"]
-    return html_list
+    return [str_html, "</td>"]
 
 
 def _html_row(
@@ -255,12 +251,10 @@ def _html_row(
             if not column_filled_this_row
             else column_filled_this_row
         )
-        if idx in column_filled_this_row[1]:
-            pass
-        else:
-            cell_position_list = list(filter(lambda x: x[1] == idx, row_list))  # pylint:disable=W0640
-
-            if cell_position_list:
+        if idx not in column_filled_this_row[1]:
+            if cell_position_list := list(
+                filter(lambda x: x[1] == idx, row_list)
+            ):
                 cell_position = cell_position_list[0]
                 cell_id = row_ann_id_list.pop(0)
                 ret_html = _html_cell(cell_position, position_filled_list)

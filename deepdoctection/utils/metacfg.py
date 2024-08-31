@@ -95,7 +95,7 @@ class AttrDict:
             key_list = keys.split(".")
 
             dic = self
-            for _, k in enumerate(key_list[:-1]):
+            for k in key_list[:-1]:
                 assert k in dir(dic), f"Unknown config key: {keys}"
                 dic = getattr(dic, k)
             key = key_list[-1]
@@ -164,8 +164,4 @@ def config_to_cli_str(config: AttrDict, *exclude: str) -> str:
     for key in exclude:
         config_dict.pop(key)
 
-    output_str = ""
-    for key, val in config_dict.items():
-        output_str += f"--{key} {val} "
-
-    return output_str
+    return "".join(f"--{key} {val} " for key, val in config_dict.items())

@@ -65,11 +65,7 @@ def xfund_to_image(
     """
 
     img = dp.get("img")
-    if img is None:
-        full_path = dp.get("file_name")
-    else:
-        full_path = img.get("fname")
-
+    full_path = dp.get("file_name") if img is None else img.get("fname")
     if full_path is None:
         return None
 
@@ -144,7 +140,6 @@ def xfund_to_image(
                     sub_cat_ner_tok = CategoryAnnotation(
                         category_name=BioTag.outside, category_id=token_tag_to_id_mapping[BioTag.outside]
                     )
-                    ann.dump_sub_category(WordType.token_tag, sub_cat_ner_tok)
                 elif not idx:
                     sub_cat_tag = CategoryAnnotation(
                         category_name=BioTag.begin, category_id=tag_to_id_mapping[BioTag.begin]
@@ -160,7 +155,6 @@ def xfund_to_image(
                             )
                         ],
                     )
-                    ann.dump_sub_category(WordType.token_tag, sub_cat_ner_tok)
                 else:
                     sub_cat_tag = CategoryAnnotation(
                         category_name=BioTag.inside, category_id=tag_to_id_mapping[BioTag.inside]
@@ -176,8 +170,7 @@ def xfund_to_image(
                             )
                         ],
                     )
-                    ann.dump_sub_category(WordType.token_tag, sub_cat_ner_tok)
-
+                ann.dump_sub_category(WordType.token_tag, sub_cat_ner_tok)
                 entity_id_to_ann_id[entity["id"]].append(ann.annotation_id)
                 ann_id_to_entity_id[ann.annotation_id] = entity["id"]
 
@@ -195,6 +188,4 @@ def xfund_to_image(
                 if ann_id != word.annotation_id:
                     word.dump_relationship(Relationships.semantic_entity_link, ann_id)
 
-    if mapping_context.context_error:
-        return None
-    return image
+    return None if mapping_context.context_error else image

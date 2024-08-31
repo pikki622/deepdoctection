@@ -46,12 +46,11 @@ class CustomFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         log_dict = {}
-        args = record.args
         str_args = []
-        if args:
+        if args := record.args:
             for arg in args:
                 if isinstance(arg, dict):
-                    log_dict.update(arg)
+                    log_dict |= arg
                 else:
                     str_args.append(arg)
         record.args = tuple(str_args)
@@ -70,7 +69,7 @@ class StreamFormatter(logging.Formatter):
 
         if record.levelno == logging.WARNING:
             fmt = f"{date}  {colored('WRN', 'magenta', attrs=['blink'])}  {msg}"
-        elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:  # pylint: disable=R1714
+        elif record.levelno in [logging.ERROR, logging.CRITICAL]:  # pylint: disable=R1714
             fmt = f"{date}  {colored('ERR', 'red', attrs=['blink', 'underline'])}  {msg}"
         elif record.levelno == logging.DEBUG:
             fmt = f"{date}  {colored('DBG', 'green', attrs=['blink'])}  {msg}"
@@ -97,7 +96,7 @@ class FileFormatter(logging.Formatter):
             "time": datetime.now().strftime("%m%d-%H%M%S"),
             "message": message,
         }
-        log_dict.update(record.log_dict)
+        log_dict |= record.log_dict
         return json.dumps(log_dict)
 
 
@@ -117,8 +116,7 @@ _CONFIG_DICT: Dict[str, Any] = {
 
 def _get_logger() -> logging.Logger:
     logging.config.dictConfig(_CONFIG_DICT)
-    _logger = logging.getLogger(__name__)
-    return _logger
+    return logging.getLogger(__name__)
 
 
 logger = _get_logger()
@@ -141,7 +139,7 @@ def _set_file(path: Pathlike) -> None:
         path = path.as_posix()
     global _FILE_HANDLER  # pylint: disable=W0603
     if os.path.isfile(path):
-        backup_name = path + "." + _get_time_str()
+        backup_name = f"{path}.{_get_time_str()}"
         shutil.move(path, backup_name)
         logger.info("Existing log file %s backuped to %s", path, backup_name)
     hdl = logging.FileHandler(filename=path, encoding="utf-8", mode="w")
@@ -228,7 +226,7 @@ def auto_set_dir(action: Optional[str] = None, name: Optional[str] = None) -> No
     basename = str(os.path.basename(mod.__file__))  # type: ignore  # pylint: disable=E1101
     auto_dir_name = os.path.join("train_log", basename[: basename.rfind(".")])
     if name:
-        auto_dir_name += "_%s" % name if os.name == "nt" else ":%s" % name  # pylint: disable=C0209
+        auto_dir_name += f"_{name}" if os.name == "nt" else f":{name}"
     set_logger_dir(auto_dir_name, action=action)
 
 

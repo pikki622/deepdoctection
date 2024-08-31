@@ -122,7 +122,7 @@ class EvalCallback(Callback):  # pylint: disable=R0903
     def _eval(self) -> None:
         scores = self.evaluator.run(True, **self.build_eval_kwargs)
         for k, val in scores.items():
-            self.trainer.monitors.put_scalar(self.dataset_name + "-" + k, val)
+            self.trainer.monitors.put_scalar(f"{self.dataset_name}-{k}", val)
 
     def _trigger_epoch(self) -> None:
         if self.epoch_num in self.epochs_to_eval:
@@ -131,8 +131,4 @@ class EvalCallback(Callback):  # pylint: disable=R0903
 
 
 def _use_replicated(config: AttrDict) -> bool:
-    if not hasattr(config, "TRAINER"):
-        return False
-    if config.TRAINER == "replicated":
-        return True
-    return False
+    return config.TRAINER == "replicated" if hasattr(config, "TRAINER") else False

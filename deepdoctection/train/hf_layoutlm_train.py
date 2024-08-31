@@ -354,7 +354,9 @@ def train_hf_layoutlm(
     image_to_raw_layoutlm_kwargs = {"dataset_type": dataset_type, "use_token_tag": use_token_tag}
     if segment_positions:
         image_to_raw_layoutlm_kwargs["segment_positions"] = segment_positions  # type: ignore
-    image_to_raw_layoutlm_kwargs.update(model_wrapper_cls.default_kwargs_for_input_mapping())
+    image_to_raw_layoutlm_kwargs |= (
+        model_wrapper_cls.default_kwargs_for_input_mapping()
+    )
     dataset = DatasetAdapter(
         dataset_train,
         True,
@@ -447,17 +449,16 @@ def train_hf_layoutlm(
         assert metric is not None  # silence mypy
         if dataset_type == DatasetType.sequence_classification:
             categories = dataset_val.dataflow.categories.get_categories(filtered=True)  # type: ignore
+        elif use_token_tag:
+            categories = dataset_val.dataflow.categories.get_sub_categories(  # type: ignore
+                categories=LayoutType.word, sub_categories={LayoutType.word: [WordType.token_tag]}, keys=False
+            )[LayoutType.word][WordType.token_tag]
+            metric.set_categories(category_names=LayoutType.word, sub_category_names={"word": ["token_tag"]})
         else:
-            if use_token_tag:
-                categories = dataset_val.dataflow.categories.get_sub_categories(  # type: ignore
-                    categories=LayoutType.word, sub_categories={LayoutType.word: [WordType.token_tag]}, keys=False
-                )[LayoutType.word][WordType.token_tag]
-                metric.set_categories(category_names=LayoutType.word, sub_category_names={"word": ["token_tag"]})
-            else:
-                categories = dataset_val.dataflow.categories.get_sub_categories(  # type: ignore
-                    categories=LayoutType.word, sub_categories={LayoutType.word: [WordType.token_class]}, keys=False
-                )[LayoutType.word][WordType.token_class]
-                metric.set_categories(category_names=LayoutType.word, sub_category_names={"word": ["token_class"]})
+            categories = dataset_val.dataflow.categories.get_sub_categories(  # type: ignore
+                categories=LayoutType.word, sub_categories={LayoutType.word: [WordType.token_class]}, keys=False
+            )[LayoutType.word][WordType.token_class]
+            metric.set_categories(category_names=LayoutType.word, sub_category_names={"word": ["token_class"]})
         dd_model = model_wrapper_cls(
             path_config_json=path_config_json,
             path_weights=path_weights,

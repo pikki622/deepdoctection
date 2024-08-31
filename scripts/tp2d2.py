@@ -39,43 +39,55 @@ def convert_weights_tp_to_d2(weights, cfg):
             weights.pop(t)
 
     def _convert_conv(src, dst):
-        if src + "/W" in weights:
-            src_w = weights.pop(src + "/W")
-            d2_weights[dst + ".weight"] = src_w.transpose(3,2,0,1)
+        if f"{src}/W" in weights:
+            src_w = weights.pop(f"{src}/W")
+            d2_weights[f"{dst}.weight"] = src_w.transpose(3,2,0,1)
 
-        if src + "/b" in weights:
-            d2_weights[dst + ".bias"] = weights.pop(src + "/b")
+        if f"{src}/b" in weights:
+            d2_weights[f"{dst}.bias"] = weights.pop(f"{src}/b")
 
-        if src + "/gn/gamma" in weights:
-            d2_weights[dst + ".norm.weight"] = weights.pop(src + "/gn/gamma")
-            d2_weights[dst + ".norm.bias"] = weights.pop(src + "/gn/beta")
+        if f"{src}/gn/gamma" in weights:
+            d2_weights[f"{dst}.norm.weight"] = weights.pop(f"{src}/gn/gamma")
+            d2_weights[f"{dst}.norm.bias"] = weights.pop(f"{src}/gn/beta")
 
-        if src + "/gamma" in weights:
-            d2_weights[dst + ".norm.weight"] = weights.pop(src + "/gamma")
-            d2_weights[dst + ".norm.bias"] = weights.pop(src + "/beta")
+        if f"{src}/gamma" in weights:
+            d2_weights[f"{dst}.norm.weight"] = weights.pop(f"{src}/gamma")
+            d2_weights[f"{dst}.norm.bias"] = weights.pop(f"{src}/beta")
 
     def _convert_fc(src,dst):
-        d2_weights[dst + ".weight"] = weights.pop(src + "/W").transpose()
-        d2_weights[dst + ".bias"] = weights.pop(src + "/b").transpose()
+        d2_weights[f"{dst}.weight"] = weights.pop(f"{src}/W").transpose()
+        d2_weights[f"{dst}.bias"] = weights.pop(f"{src}/b").transpose()
 
     # the convertion
     d2_backbone_prefix = "backbone.bottom_up."
 
     # first conv
-    _convert_conv("conv0",d2_backbone_prefix +"stem.conv1")
+    _convert_conv("conv0", f"{d2_backbone_prefix}stem.conv1")
 
     # four backbone groups
     for grpid in range(4):
         # numb blocks in third group
         num_resnet_blocks = 6 if cfg.BACKBONE.RESNET_NUM_BLOCKS[2]==6 else 23
         for blkid in range([3, 4, num_resnet_blocks ,3 ][grpid]):
-            _convert_conv(f"group{grpid}/block{blkid}/conv1",d2_backbone_prefix + f"res{grpid + 2}.{blkid}.conv1")
-            _convert_conv(f"group{grpid}/block{blkid}/conv2",d2_backbone_prefix + f"res{grpid + 2}.{blkid}.conv2")
-            _convert_conv(f"group{grpid}/block{blkid}/conv3",d2_backbone_prefix + f"res{grpid + 2}.{blkid}.conv3")
+            _convert_conv(
+                f"group{grpid}/block{blkid}/conv1",
+                f"{d2_backbone_prefix}res{grpid + 2}.{blkid}.conv1",
+            )
+            _convert_conv(
+                f"group{grpid}/block{blkid}/conv2",
+                f"{d2_backbone_prefix}res{grpid + 2}.{blkid}.conv2",
+            )
+            _convert_conv(
+                f"group{grpid}/block{blkid}/conv3",
+                f"{d2_backbone_prefix}res{grpid + 2}.{blkid}.conv3",
+            )
 
             # skip connection
             if blkid == 0:
-                _convert_conv(f"group{grpid}/block{blkid}/convshortcut",d2_backbone_prefix + f"res{grpid + 2}.{blkid}.shortcut")
+                _convert_conv(
+                    f"group{grpid}/block{blkid}/convshortcut",
+                    f"{d2_backbone_prefix}res{grpid + 2}.{blkid}.shortcut",
+                )
 
     # FPN lateral and posthoc
     for lvl in range(2, 6):
@@ -91,13 +103,15 @@ def convert_weights_tp_to_d2(weights, cfg):
 
     def _convert_box_predictor(src, dst):
         assert cfg.FPN.CASCADE
-        _convert_fc(src + "/box", dst + ".bbox_pred")
-        _convert_fc(src + "/class", dst + ".cls_score")
+        _convert_fc(f"{src}/box", f"{dst}.bbox_pred")
+        _convert_fc(f"{src}/class", f"{dst}.cls_score")
 
-        num_class = d2_weights[dst + ".cls_score.weight"].shape[0]
+        num_class = d2_weights[f"{dst}.cls_score.weight"].shape[0]
         idx = np.roll(np.arange(num_class),shift=-1)
-        d2_weights[dst + ".cls_score.weight"] = d2_weights[dst + ".cls_score.weight"][idx, :]
-        d2_weights[dst + ".cls_score.bias"] = d2_weights[dst + ".cls_score.bias"][idx]
+        d2_weights[f"{dst}.cls_score.weight"] = d2_weights[
+            f"{dst}.cls_score.weight"
+        ][idx, :]
+        d2_weights[f"{dst}.cls_score.bias"] = d2_weights[f"{dst}.cls_score.bias"][idx]
 
     if cfg.FPN.CASCADE:
         for k in range(3):

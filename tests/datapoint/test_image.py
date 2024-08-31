@@ -249,7 +249,7 @@ class TestImage:
 
         # Assert
         assert set(filtered_anns_1_ids) == {cat_1.annotation_id}
-        assert set(filtered_anns_2_ids) == set()
+        assert not set(filtered_anns_2_ids)
         assert set(filtered_anns_3_ids) == {cat_1.annotation_id, cat_3.annotation_id}
         assert set(filtered_anns_4_ids) == {cat_2.annotation_id, cat_3.annotation_id}
         assert set(filtered_anns_5_ids) == {cat_1.annotation_id, cat_2.annotation_id, cat_3.annotation_id}

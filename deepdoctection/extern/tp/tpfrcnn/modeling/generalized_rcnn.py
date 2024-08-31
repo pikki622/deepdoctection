@@ -84,7 +84,7 @@ class GeneralizedRCNN(ModelDescWithConfig):
             out.append("output/masks")
         return ["image"], out
 
-    def build_graph(self, *inputs):  # pylint: disable=R1710
+    def build_graph(self, *inputs):    # pylint: disable=R1710
         """
         Build the graph
 
@@ -120,7 +120,7 @@ class GeneralizedRCNN(ModelDescWithConfig):
         for name in self.get_inference_tensor_names()[1]:
             try:
                 name = "/".join([n_s, name]) if n_s else name
-                G.get_tensor_by_name(name + ":0")
+                G.get_tensor_by_name(f"{name}:0")
             except KeyError:
                 raise KeyError(  # pylint: disable=W0707
                     f"Your model does not define the tensor '{name}' in inference context."
@@ -172,8 +172,7 @@ class ResNetFPNModel(GeneralizedRCNN):
         :param image: tf.Tensor
         """
         c2345 = resnet_fpn_backbone(image, self.cfg)
-        p23456 = fpn_model("fpn", c2345, self.cfg.FPN.NUM_CHANNEL, self.cfg.FPN.NORM)  # pylint: disable=E1121
-        return p23456
+        return fpn_model("fpn", c2345, self.cfg.FPN.NUM_CHANNEL, self.cfg.FPN.NORM)
 
     def rpn(self, image, features, inputs):
         """

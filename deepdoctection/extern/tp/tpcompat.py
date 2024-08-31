@@ -95,14 +95,14 @@ class TensorpackPredictor(ABC):
         return OfflinePredictor(self.predict_config)
 
     def _build_config(self) -> PredictConfig:
-        predict_config = PredictConfig(
+        return PredictConfig(
             model=self._model,
-            session_init=SmartInit(self.path_weights, ignore_mismatch=self.ignore_mismatch),
+            session_init=SmartInit(
+                self.path_weights, ignore_mismatch=self.ignore_mismatch
+            ),
             input_names=self._model.get_inference_tensor_names()[0],
             output_names=self._model.get_inference_tensor_names()[1],
         )
-
-        return predict_config
 
     @staticmethod
     @abstractmethod

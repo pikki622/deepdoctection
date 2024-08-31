@@ -146,7 +146,10 @@ class RvlcdipBuilder(DataFlowBaseBuilder):
             summary = SummaryAnnotation()
             categories_dict = self.categories.get_categories(init=True)
             summary.dump_sub_category(
-                PageType.document_type, CategoryAnnotation(category_name=categories_dict[label], category_id=str(label))
+                PageType.document_type,
+                CategoryAnnotation(
+                    category_name=categories_dict[label], category_id=label
+                ),
             )
             image.summary = summary
             if not load_img:

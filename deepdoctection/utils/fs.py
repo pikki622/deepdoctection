@@ -219,14 +219,10 @@ def maybe_path_or_pdf(path: Pathlike) -> int:
     :return: A value of 0,1,2
     """
 
-    is_dir = os.path.isdir(path)
-    if is_dir:
+    if is_dir := os.path.isdir(path):
         return 1
     file_name = os.path.split(path)[1]
-    is_pdf = is_file_extension(file_name, ".pdf")
-    if is_pdf:
-        return 2
-    return 0
+    return 2 if (is_pdf := is_file_extension(file_name, ".pdf")) else 0
 
 
 def load_json(path_ann: Pathlike) -> JsonDict:

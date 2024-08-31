@@ -94,8 +94,7 @@ def convert_np_array_to_b64(np_image: ImageType) -> str:
     :return: An image as base64 string.
     """
     np_encode = cv2.imencode(".png", np_image)
-    image = base64.b64encode(np_encode[1]).decode("utf-8")  # type: ignore
-    return image
+    return base64.b64encode(np_encode[1]).decode("utf-8")
 
 
 @no_type_check
@@ -107,8 +106,7 @@ def convert_np_array_to_b64_b(np_image: ImageType) -> bytes:
     :return: An image as base64 bytes.
     """
     np_encode = cv2.imencode(".png", np_image)
-    b_image = np_encode[1].tobytes()
-    return b_image
+    return np_encode[1].tobytes()
 
 
 @deprecated("Use convert_pdf_bytes_to_np_array_v2", "2022-02-23")
@@ -161,10 +159,10 @@ def convert_pdf_bytes_to_np_array_v2(pdf_bytes: bytes, dpi: Optional[int] = None
     with BytesIO(pdf_bytes) as pdf_file:
         pdf = PdfReader(pdf_file).pages[0]
     shape = pdf.mediabox  # pylint: disable=E1101
-    height = shape[3] - shape[1]
-    width = shape[2] - shape[0]
-
     if dpi is None:
+        height = shape[3] - shape[1]
+        width = shape[2] - shape[0]
+
         return pdf_to_np_array(pdf_bytes, size=(int(width), int(height)))
     return pdf_to_np_array(pdf_bytes, dpi=dpi)
 
@@ -175,8 +173,7 @@ def box_to_point4(boxes: NDArray[np.float32]) -> NDArray[np.float32]:
     :return: (nx4)x2
     """
     box = boxes[:, [0, 1, 2, 3, 0, 3, 2, 1]]
-    box = box.reshape((-1, 2))
-    return box
+    return box.reshape((-1, 2))
 
 
 def point4_to_box(points: NDArray[np.float32]) -> NDArray[np.float32]:

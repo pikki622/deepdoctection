@@ -79,6 +79,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits, rpn_batch_
         valid_label_prob = tf.nn.sigmoid(valid_label_logits)
         summaries = []
         with tf.device("/cpu:0"):
+            placeholder = 0.5  # A small value will make summaries appear lower.
             for thresh in [0.5, 0.2, 0.1]:
                 valid_prediction = tf.cast(valid_label_prob > thresh, tf.int32)
                 nr_pos_prediction = tf.reduce_sum(valid_prediction, name="num_pos_prediction")
@@ -86,7 +87,6 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits, rpn_batch_
                     tf.logical_and(valid_label_prob > thresh, tf.equal(valid_prediction, valid_anchor_labels)),
                     dtype=tf.int32,
                 )
-                placeholder = 0.5  # A small value will make summaries appear lower.
                 recall = tf.cast(tf.truediv(pos_prediction_corr, nr_pos), tf.float32)
                 recall = tf.where(tf.equal(nr_pos, 0), placeholder, recall, name=f"recall_th{thresh}")
                 precision = tf.cast(tf.truediv(pos_prediction_corr, nr_pos_prediction), tf.float32)

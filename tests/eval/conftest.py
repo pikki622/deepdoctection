@@ -98,10 +98,23 @@ def fixture_detection_results() -> List[DetectionResult]:
     """
     detection results
     """
-    detect_results_list = [
-        DetectionResult(box=[15.0, 100.0, 60.0, 150.0], score=0.9, class_id=1, class_name=get_type("row")),
-        DetectionResult(box=[15.0, 200.0, 70.0, 240.0], score=0.8, class_id=1, class_name=get_type("row")),
-        DetectionResult(box=[10.0, 50.0, 20.0, 250.0], score=0.7, class_id=2, class_name=get_type("column")),
+    return [
+        DetectionResult(
+            box=[15.0, 100.0, 60.0, 150.0],
+            score=0.9,
+            class_id=1,
+            class_name=get_type("row"),
+        ),
+        DetectionResult(
+            box=[15.0, 200.0, 70.0, 240.0],
+            score=0.8,
+            class_id=1,
+            class_name=get_type("row"),
+        ),
+        DetectionResult(
+            box=[10.0, 50.0, 20.0, 250.0],
+            score=0.7,
+            class_id=2,
+            class_name=get_type("column"),
+        ),
     ]
-
-    return detect_results_list

@@ -57,7 +57,7 @@ def decrypt_pdf_document(path: Pathlike) -> bool:
 
     if qpdf_available():
         path_base, file_name = os.path.split(path)
-        file_name_tmp = os.path.splitext(file_name)[0] + "tmp.pdf"
+        file_name_tmp = f"{os.path.splitext(file_name)[0]}tmp.pdf"
         path_tmp = os.path.join(path_base, file_name_tmp)
         copyfile(path, path_tmp)
         cmd_str = f"qpdf --password='' --decrypt {path_tmp} {os.path.join(path_base, path)}"
@@ -100,8 +100,7 @@ def get_pdf_file_reader(path: Pathlike) -> PdfReader:
                     logger.error("pdf document %s cannot be decrypted and therefore cannot be processed further.", path)
                     sys.exit()
 
-    file_reader = PdfReader(open(path, "rb"))  # pylint: disable=R1732
-    return file_reader
+    return PdfReader(open(path, "rb"))
 
 
 def get_pdf_file_writer() -> PdfWriter:
@@ -162,18 +161,15 @@ def _input_to_cli_str(
         raise PopplerNotFound("Poppler not found. Please install or add to your PATH.")
 
     if platform.system() == "Windows":
-        command = command + ".exe"
+        command = f"{command}.exe"
     cmd_args.append(command)
-    cmd_args.extend(["-r", str(dpi), str(input_file_name)])
-    cmd_args.append("-png")
-    cmd_args.append(str(output_file_name))
-
+    cmd_args.extend(
+        ["-r", str(dpi), str(input_file_name), "-png", str(output_file_name)]
+    )
     if size:
         assert len(size) == 2, size
         assert isinstance(size[0], int) and isinstance(size[1], int), size
-        cmd_args.extend(["-scale-to-x", str(size[0])])
-        cmd_args.extend(["-scale-to-y", str(size[1])])
-
+        cmd_args.extend(["-scale-to-x", str(size[0]), "-scale-to-y", str(size[1])])
     return cmd_args
 
 
@@ -215,6 +211,6 @@ def pdf_to_np_array(pdf_bytes: bytes, size: Optional[Tuple[int, int]] = None, dp
 
     with save_tmp_file(pdf_bytes, "pdf_") as (tmp_name, input_file_name):
         _run_poppler(_input_to_cli_str(input_file_name, tmp_name, dpi, size))
-        image = imread(tmp_name + "-1.png", IMREAD_COLOR)
+        image = imread(f"{tmp_name}-1.png", IMREAD_COLOR)
 
     return image.astype(uint8)

@@ -257,9 +257,7 @@ class AnnotationNmsService(PipelineComponent):
             assert len(self.nms_pairs) == len(priority), "Sequences of nms_pairs and priority must have same length"
 
             def _get_type(val: Optional[str]) -> Union[ObjectTypes, str]:
-                if val is None:
-                    return ""
-                return get_type(val)
+                return "" if val is None else get_type(val)
 
             self.priority = [_get_type(val) for val in priority]
         else:

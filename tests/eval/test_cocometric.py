@@ -55,10 +55,7 @@ class TestCocoMetric:
         # Act
         output = CocoMetric.get_distance(self.dataflow_gt, self.dataflow_pr, self.categories)
 
-        # Assert
-        output_list = []
-        for res in output:
-            output_list.append(res["val"])
+        output_list = [res["val"] for res in output]
         output = np.asarray(output_list)  # type: ignore
 
         expected_output = np.asarray([1, 1, 1, 1, -1, -1, 1, 1, 1, 1, -1, -1])
@@ -82,10 +79,7 @@ class TestCocoMetric:
         # Act
         output = CocoMetric.get_distance(self.dataflow_gt, self.dataflow_pr, self.categories)
 
-        # Assert
-        output_list = []
-        for res in output:
-            output_list.append(res["val"])
+        output_list = [res["val"] for res in output]
         output = np.asarray(output_list)  # type: ignore
 
         expected_output = np.asarray([-1, 1, 1, -1, 1, -1, 1, 1, 1, -1, 1, -1])

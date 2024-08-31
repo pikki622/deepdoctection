@@ -199,9 +199,7 @@ def f1_score(
     np_precision = precision(label_gt, label_predictions, masks, micro)
     np_recall = recall(label_gt, label_predictions, masks, micro)
     f_1 = 2 * np_precision * np_recall / (np_precision + np_recall)
-    if per_label:
-        return f_1
-    return np.average(f_1)  # type: ignore
+    return f_1 if per_label else np.average(f_1)
 
 
 class ClassificationMetric(MetricBase):
@@ -401,16 +399,16 @@ class ConfusionMetric(ClassificationMetric):
             confusion_matrix = cls.metric(labels_gt[key], labels_pr[key])
             number_labels: TypeCounter[int] = Counter(labels_gt[key])
             for row_number, row in enumerate(confusion_matrix, 1):
-                for col_number, val in enumerate(row, 1):
-                    results.append(
-                        {
-                            "key": key.value if isinstance(key, ObjectTypes) else key,
-                            "category_id_gt": row_number,
-                            "category_id_pr": col_number,
-                            "val": float(val),
-                            "num_samples_gt": number_labels[row_number],
-                        }
-                    )
+                results.extend(
+                    {
+                        "key": key.value if isinstance(key, ObjectTypes) else key,
+                        "category_id_gt": row_number,
+                        "category_id_pr": col_number,
+                        "val": float(val),
+                        "num_samples_gt": number_labels[row_number],
+                    }
+                    for col_number, val in enumerate(row, 1)
+                )
         cls._results = results
         return results
 
@@ -447,15 +445,15 @@ class PrecisionMetric(ClassificationMetric):
         for key in labels_gt:  # pylint: disable=C0206
             score = cls.metric(labels_gt[key], labels_pr[key])
             number_labels: TypeCounter[int] = Counter(labels_gt[key])
-            for label_id, val in enumerate(score, 1):
-                results.append(
-                    {
-                        "key": key.value if isinstance(key, ObjectTypes) else key,
-                        "category_id": label_id,
-                        "val": float(val),
-                        "num_samples": number_labels[label_id],
-                    }
-                )
+            results.extend(
+                {
+                    "key": key.value if isinstance(key, ObjectTypes) else key,
+                    "category_id": label_id,
+                    "val": float(val),
+                    "num_samples": number_labels[label_id],
+                }
+                for label_id, val in enumerate(score, 1)
+            )
         cls._results = results
         return results
 

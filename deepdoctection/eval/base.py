@@ -112,13 +112,12 @@ class MetricBase(ABC):
             new_val = 0.0
             for k, val in res.items():
                 if str(val) != "":
-                    if k != "val":
-                        if k != "key":
-                            new_key += k + "/" + str(val) + "/"
-                        else:
-                            new_key += str(val) + "/"
-                    else:
+                    if k == "key":
+                        new_key += f"{str(val)}/"
+                    elif k == "val":
                         new_val = val
+                    else:
+                        new_key += f"{k}/{str(val)}/"
             output[new_key[:-1]] = new_val
 
         return output

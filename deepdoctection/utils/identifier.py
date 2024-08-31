@@ -38,7 +38,7 @@ def is_uuid_like(input_id: str) -> bool:
     :return: A boolean output
     """
     try:
-        uuid.UUID(str(input_id))
+        uuid.UUID(input_id)
         return True
     except ValueError:
         return False

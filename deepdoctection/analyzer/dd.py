@@ -93,9 +93,7 @@ def _auto_select_lib_and_device() -> Tuple[str, str]:
             return "PT", "cpu"
         raise ModuleNotFoundError("Install Pytorch and Torchvision to run with a CPU")
     if pytorch_available():
-        if cuda.is_available():
-            return "PT", "cuda"
-        return "PT", "cpu"
+        return ("PT", "cuda") if cuda.is_available() else ("PT", "cpu")
     raise ModuleNotFoundError("Install Tensorflow or Pytorch before building analyzer")
 
 
@@ -328,9 +326,10 @@ def build_analyzer(cfg: AttrDict) -> DoctectionPipe:
         floating_text_block_categories=cfg.TEXT_ORDERING.FLOATING_TEXT_BLOCK_CATEGORIES,
         include_residual_text_container=cfg.TEXT_ORDERING.INCLUDE_RESIDUAL_TEXT_CONTAINER,
     )
-    pipe = DoctectionPipe(pipeline_component_list=pipe_component_list, page_parsing_service=page_parsing_service)
-
-    return pipe
+    return DoctectionPipe(
+        pipeline_component_list=pipe_component_list,
+        page_parsing_service=page_parsing_service,
+    )
 
 
 def get_dd_analyzer(reset_config_file: bool = False, config_overwrite: Optional[List[str]] = None) -> DoctectionPipe:

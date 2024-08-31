@@ -103,10 +103,7 @@ def coco_to_image(
                 )
                 annotation.dump_sub_category(coarse_sub_cat_name, sub_cat)
 
-    if mapping_context.context_error:
-        return None
-
-    return image
+    return None if mapping_context.context_error else image
 
 
 def image_to_coco(dp: Image) -> Tuple[JsonDict, List[JsonDict]]:
@@ -121,10 +118,9 @@ def image_to_coco(dp: Image) -> Tuple[JsonDict, List[JsonDict]]:
     if not isinstance(dp, Image):
         raise TypeError(f"datapoints must be of type Image, is of type {type(dp)}")
 
-    img: JsonDict = {}
     anns: List[JsonDict] = []
 
-    img["id"] = int("".join([s for s in dp.image_id if s.isdigit()]))
+    img: JsonDict = {"id": int("".join([s for s in dp.image_id if s.isdigit()]))}
     img["width"] = dp.width
     img["height"] = dp.height
     img["file_name"] = dp.file_name

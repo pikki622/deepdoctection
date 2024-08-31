@@ -219,10 +219,7 @@ class HFLayoutLmTokenClassifierBase(LMTokenClassifier, ABC):
             self.categories = self._categories_orig_to_categories(
                 self.categories_semantics, self.categories_bio  # type: ignore
             )
-        if device is not None:
-            self.device = device
-        else:
-            self.device = set_torch_auto_device()
+        self.device = device if device is not None else set_torch_auto_device()
         self.model.to(self.device)
 
     @classmethod
@@ -612,10 +609,7 @@ class HFLayoutLmSequenceClassifierBase(LMSequenceClassifier, ABC):
         self.path_weights = path_weights
         self.categories = copy(categories)  # type: ignore
 
-        if device is not None:
-            self.device = device
-        else:
-            self.device = set_torch_auto_device()
+        self.device = device if device is not None else set_torch_auto_device()
         self.model.to(self.device)
 
     def predict(self, **encodings: Union[List[List[str]], "torch.Tensor"]) -> SequenceClassResult:

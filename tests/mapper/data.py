@@ -685,9 +685,7 @@ class DatapointCoco:
         :return: np.array
         """
         if path == self.dp["file_name"]:
-            if type_id == "np":
-                return self.white_image
-            return self.white_image_string
+            return self.white_image if type_id == "np" else self.white_image_string
         return None
 
     def get_number_anns(self) -> int:
@@ -700,17 +698,13 @@ class DatapointCoco:
         """
         width
         """
-        if image_loaded:
-            return self.white_image.shape[1]
-        return float(self.dp["width"])  # type: ignore
+        return self.white_image.shape[1] if image_loaded else float(self.dp["width"])
 
     def get_height(self, image_loaded: bool) -> float:
         """
         height
         """
-        if image_loaded:
-            return self.white_image.shape[0]
-        return float(self.dp["height"])  # type: ignore
+        return self.white_image.shape[0] if image_loaded else float(self.dp["height"])
 
     def get_first_ann_box(self) -> Box:
         """
@@ -722,9 +716,7 @@ class DatapointCoco:
         """
         category_name or category_id
         """
-        if as_index:
-            return "1"
-        return self.categories["1"]
+        return "1" if as_index else self.categories["1"]
 
 
 @dataclass
@@ -746,9 +738,7 @@ class DatapointPubtabnet:
         :return: np.array
         """
         assert path is not None
-        if type_id == "np":
-            return self.white_image
-        return self.white_image_string
+        return self.white_image if type_id == "np" else self.white_image_string
 
     def get_width(self) -> float:
         """
@@ -778,9 +768,7 @@ class DatapointPubtabnet:
         """
         category_name or category_id
         """
-        if as_index:
-            return "1"
-        return self.categories["1"]
+        return "1" if as_index else self.categories["1"]
 
     @staticmethod
     def get_first_ann_sub_category_header_name() -> ObjectTypes:
@@ -927,17 +915,13 @@ class DatapointProdigy:
         """
         width
         """
-        if image_loaded:
-            return 17.0
-        return float(self.dp["width"])  # type: ignore
+        return 17.0 if image_loaded else float(self.dp["width"])
 
     def get_height(self, image_loaded: bool) -> float:
         """
         height
         """
-        if image_loaded:
-            return 34.0
-        return float(self.dp["height"])  # type: ignore
+        return 34.0 if image_loaded else float(self.dp["height"])
 
     def get_number_anns(self) -> int:
         """
@@ -955,9 +939,7 @@ class DatapointProdigy:
         """
         category_name or category_id
         """
-        if as_index:
-            return self.categories[LayoutType.table]
-        return LayoutType.table
+        return self.categories[LayoutType.table] if as_index else LayoutType.table
 
 
 class DatapointImage:
@@ -975,7 +957,9 @@ class DatapointImage:
         box = BoundingBox(ulx=16.6, uly=26.6, height=4.0, width=14.0, absolute_coords=True)
         ann = ImageAnnotation(category_name="BAK", bounding_box=box, score=0.99, category_id="2")
         self.image.dump(ann)
-        self.dict_image: str = "data:image/png;base64," + convert_np_array_to_b64(_img_np)
+        self.dict_image: str = (
+            f"data:image/png;base64,{convert_np_array_to_b64(_img_np)}"
+        )
         self.dict_text: str = "sample.png"
         self.len_spans: int = 2
         self.first_span: JsonDict = {

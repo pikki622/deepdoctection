@@ -148,7 +148,7 @@ class XfundBuilder(DataFlowBaseBuilder):
         else:
             raise TypeError("language requires to be a string")
 
-        if not all(elem in _LANGUAGES for elem in languages):
+        if any(elem not in _LANGUAGES for elem in languages):
             raise ValueError("Not all languages available")
 
         # Load

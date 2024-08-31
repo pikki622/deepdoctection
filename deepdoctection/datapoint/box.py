@@ -196,16 +196,16 @@ class BoundingBox:
                 raise BoundingBoxError("Bounding box not fully initialized")
             self.lry = self.uly + self.height
 
-        if not (self.ulx >= 0.0 and self.uly >= 0.0):
+        if self.ulx < 0.0 or self.uly < 0.0:
             raise BoundingBoxError("Bounding box ul must be >= (0.,0.)")
-        if not (self.height > 0.0 and self.width > 0.0):
+        if self.height <= 0.0 or self.width <= 0.0:
             raise BoundingBoxError(
                 f"bounding box must have height and width >0. Check coords "
                 f"ulx: {self.ulx}, uly: {self.uly}, lrx: {self.lrx}, "
                 f"lry: {self.lry}."
             )
-        if not self.absolute_coords:
-            if not (self.ulx <= 1.0 and self.uly <= 1.0 and self.lrx <= 1.0 and self.lry <= 1.0):
+        if self.ulx > 1.0 or self.uly > 1.0 or self.lrx > 1.0 or self.lry > 1.0:
+            if not self.absolute_coords:
                 raise BoundingBoxError("coordinates must be between 0 and 1")
 
     @property
@@ -256,7 +256,7 @@ class BoundingBox:
         np_poly_scale = np.array(
             [scale_x, scale_y, scale_x, scale_y, scale_x, scale_y, scale_x, scale_y], dtype=np.float32
         )
-        assert mode in ("xyxy", "xywh", "poly"), "Not a valid mode"
+        assert mode in {"xyxy", "xywh", "poly"}, "Not a valid mode"
         if mode == "xyxy":
             return np.array([self.ulx, self.uly, self.lrx, self.lry], dtype=np.float32) * np_box_scale
         if mode == "xywh":
@@ -280,7 +280,7 @@ class BoundingBox:
         :param scale_y: rescale the y coordinate. Defaults to 1
         :return: box coordinates
         """
-        assert mode in ("xyxy", "xywh", "poly"), "Not a valid mode"
+        assert mode in {"xyxy", "xywh", "poly"}, "Not a valid mode"
         if mode == "xyxy":
             return [
                 self.ulx * scale_x,
@@ -324,23 +324,23 @@ class BoundingBox:
         """
 
         if absolute_coords != self.absolute_coords:  # only transforming in this case
-            if self.absolute_coords:
-                transformed_box = BoundingBox(
+            return (
+                BoundingBox(
                     absolute_coords=not self.absolute_coords,
                     ulx=max(self.ulx / image_width, 0.0),
                     uly=max(self.uly / image_height, 0.0),
                     lrx=min(self.lrx / image_width, 1.0),
                     lry=min(self.lry / image_height, 1.0),
                 )
-            else:
-                transformed_box = BoundingBox(
+                if self.absolute_coords
+                else BoundingBox(
                     absolute_coords=not self.absolute_coords,
                     ulx=self.ulx * image_width,
                     uly=self.uly * image_height,
                     lrx=self.lrx * image_width,
                     lry=self.lry * image_height,
                 )
-            return transformed_box
+            )
         return self
 
     def __str__(self) -> str:
@@ -424,7 +424,7 @@ def crop_box_from_image(
         absolute_coord_box = crop_box
 
     assert isinstance(absolute_coord_box, BoundingBox)
-    np_max_y, np_max_x = np_image.shape[0:2]
+    np_max_y, np_max_x = np_image.shape[:2]
     return np_image[
         int(floor(absolute_coord_box.uly)) : min(int(ceil(absolute_coord_box.lry)), np_max_y),
         int(floor(absolute_coord_box.ulx)) : min(int(ceil(absolute_coord_box.lrx)), np_max_x),

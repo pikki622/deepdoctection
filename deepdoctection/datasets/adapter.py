@@ -144,13 +144,10 @@ class DatasetAdapter(IterableDataset):  # type: ignore
             self.number_datapoints = len(datapoints)
 
             df = CustomDataFromList(datapoints, shuffle=True)
-            if not image_to_framework_func:
-                df = RepeatedData(df, -1)
-            else:
+            if image_to_framework_func:
                 df_list = CacheData(df).get_cache()
                 df = CustomDataFromList(df_list, shuffle=True)
-                df = RepeatedData(df, -1)
-
+            df = RepeatedData(df, -1)
         if image_to_framework_func:
             df = MapData(df, image_to_framework_func)
 
@@ -161,9 +158,7 @@ class DatasetAdapter(IterableDataset):  # type: ignore
         return iter(self.df)
 
     def __len__(self) -> int:
-        if self.number_datapoints:
-            return self.number_datapoints
-        return len(self.df)
+        return self.number_datapoints if self.number_datapoints else len(self.df)
 
     def __getitem__(self, item: Any) -> None:
         raise NotImplementedError

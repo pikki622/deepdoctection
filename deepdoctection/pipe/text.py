@@ -111,9 +111,7 @@ class TextExtractionService(PredictorPipelineComponent):
             predictor_input = self.get_predictor_input(text_roi)
             if predictor_input is None:
                 raise ValueError("predictor_input cannot be None")
-            if isinstance(predictor_input, int):
-                pass
-            else:
+            if not isinstance(predictor_input, int):
                 width, height = None, None
                 if self.run_time_ocr_language_selection:
                     self.predictor.set_language(dp.summary.get_sub_category(PageType.language).value)  # type: ignore
@@ -148,8 +146,7 @@ class TextExtractionService(PredictorPipelineComponent):
         """
         if self.skip_if_text_extracted:
             text_categories = self.predictor.possible_categories()  # type: ignore
-            text_anns = dp.get_annotation(category_names=text_categories)
-            if text_anns:
+            if text_anns := dp.get_annotation(category_names=text_categories):
                 return []
 
         if self.extract_from_category:
@@ -190,13 +187,13 @@ class TextExtractionService(PredictorPipelineComponent):
     def get_meta_annotation(self) -> JsonDict:
         if self.extract_from_category:
             sub_cat_dict = {category: {WordType.characters} for category in self.extract_from_category}
-        else:
-            if not isinstance(self.predictor, (ObjectDetector, PdfMiner)):
-                raise TypeError(
-                    f"self.predictor must be of type ObjectDetector or PdfMiner but is of type "
-                    f"{type(self.predictor)}"
-                )
+        elif isinstance(self.predictor, (ObjectDetector, PdfMiner)):
             sub_cat_dict = {category: {WordType.characters} for category in self.predictor.possible_categories()}
+        else:
+            raise TypeError(
+                f"self.predictor must be of type ObjectDetector or PdfMiner but is of type "
+                f"{type(self.predictor)}"
+            )
         return dict(
             [
                 (

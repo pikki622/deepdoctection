@@ -88,7 +88,7 @@ def save_tmp_file(image: Union[str, ImageType, bytes], prefix: str) -> Iterator[
                 yield file.name, path.realpath(path.normpath(path.normcase(image)))
                 return
             if isinstance(image, (np.ndarray, np.generic)):
-                input_file_name = file.name + ".PNG"
+                input_file_name = f"{file.name}.PNG"
                 imwrite(input_file_name, image)
                 yield file.name, input_file_name
             if isinstance(image, bytes):
@@ -97,7 +97,7 @@ def save_tmp_file(image: Union[str, ImageType, bytes], prefix: str) -> Iterator[
                 file.flush()
                 yield file.name, input_file_name
     finally:
-        for file_name in iglob(file.name + "*" if file.name else file.name):
+        for file_name in iglob(f"{file.name}*" if file.name else file.name):
             try:
                 remove(file_name)
             except OSError as error:

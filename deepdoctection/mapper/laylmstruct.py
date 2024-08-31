@@ -139,9 +139,10 @@ def image_to_raw_layoutlm_features(
                 bounding_box = segm_ann.bounding_box
             if not bounding_box.absolute_coords:
                 bounding_box = bounding_box.transform(dp.width, dp.height, absolute_coords=True)
-            word_id_to_segment_box.update(
-                {word_ann: bounding_box for word_ann in segm_ann.get_relationship(Relationships.child)}
-            )
+            word_id_to_segment_box |= {
+                word_ann: bounding_box
+                for word_ann in segm_ann.get_relationship(Relationships.child)
+            }
 
     for ann in anns:
         all_ann_ids.append(ann.annotation_id)
@@ -315,55 +316,46 @@ def _tokenize_with_sliding_window(
             end = min(max_length + start, total_length)
             pad_last = max(max_length + start - end, 0)
             overflow_to_sample_mapping.append(idx)
+            tokens = tokens_orig[start:end]
+            tokens.insert(0, tokenizer.cls_token)
             if not pad_last:
-                tokens = tokens_orig[start:end]
-                tokens.insert(0, tokenizer.cls_token)
                 tokens.append(tokenizer.sep_token)
-                all_tokens.append(tokens)
                 input_ids = input_ids_orig[start:end]
                 input_ids.insert(0, 101)
                 input_ids.append(102)
-                all_input_ids.append(input_ids)
                 token_type_ids = token_type_ids_orig[start:end]
                 token_type_ids.insert(0, 0)
                 token_type_ids.append(0)
-                all_token_type_ids.append(token_type_ids)
                 attention_mask = attention_mask_orig[start:end]
                 attention_mask.insert(0, 1)
                 attention_mask.append(1)
-                all_attention_mask.append(attention_mask)
                 word_ids = word_ids_orig[start:end]
                 word_ids.insert(0, None)
                 word_ids.append(None)
-                all_word_ids.append(word_ids)
             else:
-                # last sliding window. We have to pad the end in order to have equal length along all windows.
-                tokens = tokens_orig[start:end]
-                tokens.insert(0, tokenizer.cls_token)
                 pads = [tokenizer.pad_token for _ in range(pad_last + 1)]
                 tokens.extend(pads)
-                all_tokens.append(tokens)
                 input_ids = input_ids_orig[start:end]
                 input_ids.insert(0, 101)
                 pad_ids = [0 for _ in range(pad_last + 1)]
                 input_ids.extend(pad_ids)
-                all_input_ids.append(input_ids)
                 token_type_ids = token_type_ids_orig[start:end]
                 token_type_ids.insert(0, 0)
                 pad_ids = [0 for _ in range(pad_last + 1)]
                 token_type_ids.extend(pad_ids)
-                all_token_type_ids.append(token_type_ids)
                 attention_mask = attention_mask_orig[start:end]
                 attention_mask.insert(0, 1)
                 pad_ids = [1 for _ in range(pad_last + 1)]
                 attention_mask.extend(pad_ids)
-                all_attention_mask.append(attention_mask)
                 word_ids = word_ids_orig[start:end]
                 word_ids.insert(0, None)
                 pad_none = [None for _ in range(pad_last + 1)]
                 word_ids.extend(pad_none)
-                all_word_ids.append(word_ids)
-
+            all_word_ids.append(word_ids)
+            all_attention_mask.append(attention_mask)
+            all_token_type_ids.append(token_type_ids)
+            all_input_ids.append(input_ids)
+            all_tokens.append(tokens)
     if max_batch_size:
         if max_batch_size < len(overflow_to_sample_mapping):
             (
@@ -457,7 +449,7 @@ def raw_features_to_layoutlm_features(
         raw_features[0]["dataset_type"] == DatasetType.sequence_classification
         and raw_features[0].get("labels") is not None
     )
-    _has_labels = bool(_has_token_labels or _has_sequence_labels)
+    _has_labels = _has_token_labels or _has_sequence_labels
     _image_key = "pixel_values" if "pixel_values" in raw_features[0] else "image"
 
     if sliding_window_stride:

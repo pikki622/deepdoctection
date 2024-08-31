@@ -139,21 +139,20 @@ class MultiThreadPipelineComponent(PipelineComponent):
 
         :return: A list of Images
         """
-        with ThreadPoolExecutor(
-            max_workers=len(self.pipe_components), thread_name_prefix="EvalWorker"
-        ) as executor, tqdm.tqdm(total=self.input_queue.qsize()) as pbar:
-            futures = []
-            for component in self.pipe_components:
-                futures.append(
-                    executor.submit(
-                        self._thread_predict_on_queue,
-                        self.input_queue,
-                        component,
-                        pbar,
-                        self.pre_proc_func,
-                        self.post_proc_func,
-                    )
+        with (ThreadPoolExecutor(
+                max_workers=len(self.pipe_components), thread_name_prefix="EvalWorker"
+            ) as executor, tqdm.tqdm(total=self.input_queue.qsize()) as pbar):
+            futures = [
+                executor.submit(
+                    self._thread_predict_on_queue,
+                    self.input_queue,
+                    component,
+                    pbar,
+                    self.pre_proc_func,
+                    self.post_proc_func,
                 )
+                for component in self.pipe_components
+            ]
             all_results = list(itertools.chain(*[fut.result() for fut in futures]))
         return all_results
 

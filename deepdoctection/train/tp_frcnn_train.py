@@ -236,7 +236,7 @@ def train_faster_rcnn(
 
     config_overwrite = [] if config_overwrite is None else config_overwrite
 
-    log_dir = "TRAIN.LOG_DIR=" + log_dir
+    log_dir = f"TRAIN.LOG_DIR={log_dir}"
     config_overwrite.append(log_dir)
 
     config = set_config_by_yaml(path_config_yaml)

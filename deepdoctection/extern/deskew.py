@@ -43,9 +43,7 @@ class Jdeskewer(ImageTransformer):
     def transform(self, np_img: ImageType) -> ImageType:
         angle = get_angle(np_img)
 
-        if angle > self.min_angle_rotation:
-            return rotate(np_img, angle)
-        return np_img
+        return rotate(np_img, angle) if angle > self.min_angle_rotation else np_img
 
     @classmethod
     def get_requirements(cls) -> List[Requirement]:

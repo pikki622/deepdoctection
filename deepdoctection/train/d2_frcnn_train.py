@@ -84,8 +84,7 @@ def _set_config(
 
 
 def _update_for_eval(config_overwrite: List[str]) -> List[str]:
-    ret = [item for item in config_overwrite if not "WANDB" in item]
-    return ret
+    return [item for item in config_overwrite if "WANDB" not in item]
 
 
 class WandbWriter(EventWriter):
@@ -116,10 +115,12 @@ class WandbWriter(EventWriter):
     def write(self) -> None:
         storage = get_event_storage()
 
-        log_dict = {}
-        for key, (val, _) in storage.latest_with_smoothing_hint(self._window_size).items():
-            log_dict[key] = val
-
+        log_dict = {
+            key: val
+            for key, (val, _) in storage.latest_with_smoothing_hint(
+                self._window_size
+            ).items()
+        }
         self._run.log(log_dict)  # type:ignore
 
     def close(self) -> None:
@@ -229,8 +230,7 @@ class D2Trainer(DefaultTrainer):
         assert self.evaluator.pipe_component is not None
         for comp in self.evaluator.pipe_component.pipe_components:
             comp.predictor.d2_predictor = copy.deepcopy(self.model).eval()  # type: ignore # pylint: disable=E1101
-        scores = self.evaluator.run(True, **build_eval_kwargs)
-        return scores
+        return self.evaluator.run(True, **build_eval_kwargs)
 
     def setup_evaluator(
         self,

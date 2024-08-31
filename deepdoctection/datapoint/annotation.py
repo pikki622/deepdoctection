@@ -112,9 +112,7 @@ class Annotation(ABC):
             raise AssertionError("Annotation_id already defined and cannot be reset")
         if is_uuid_like(input_id):
             self._annotation_id = input_id
-        elif isinstance(input_id, property):
-            pass
-        else:
+        elif not isinstance(input_id, property):
             raise ValueError("Annotation_id must be uuid3 string")
 
     @abstractmethod
@@ -131,7 +129,7 @@ class Annotation(ABC):
     def _assert_attributes_have_str(self, state_id: bool = False) -> None:
         defining_attributes = self.get_state_attributes() if state_id else self.get_defining_attributes()
         for attr in defining_attributes:
-            if not hasattr(eval("self." + attr), "__str__"):  # pylint: disable=W0123
+            if not hasattr(eval(f"self.{attr}"), "__str__"):  # pylint: disable=W0123
                 raise AttributeError(f"Attribute {attr} must have __str__ method")
 
     @staticmethod
@@ -159,9 +157,7 @@ class Annotation(ABC):
         :return: A custom dict.
         """
 
-        img_dict = as_dict(self, dict_factory=dict)
-
-        return img_dict
+        return as_dict(self, dict_factory=dict)
 
     def deactivate(self) -> None:
         """
@@ -292,15 +288,14 @@ class CategoryAnnotation(Annotation):
         if sub_category_name in self.sub_categories:
             raise KeyError(f"{sub_category_name} as sub category already defined for " f"{self.annotation_id}")
 
-        if self._annotation_id is not None:
-            if annotation._annotation_id is None:  # pylint: disable=W0212
-                annotation.annotation_id = self.set_annotation_id(annotation, self.annotation_id, *container_id_context)
-        else:
+        if self._annotation_id is None:
             tmp_annotation_id = self.set_annotation_id(self)
             if annotation._annotation_id is None:  # pylint: disable=W0212
                 annotation.annotation_id = annotation.set_annotation_id(
                     annotation, tmp_annotation_id, *container_id_context
                 )
+        elif annotation._annotation_id is None:  # pylint: disable=W0212
+            annotation.annotation_id = self.set_annotation_id(annotation, self.annotation_id, *container_id_context)
         self.sub_categories[get_type(sub_category_name)] = annotation
 
     def get_sub_category(self, sub_category_name: ObjectTypes) -> "CategoryAnnotation":
@@ -348,9 +343,7 @@ class CategoryAnnotation(Annotation):
         :param key: The key for the required relationship.
         :return: Get a (possibly) empty list of annotation ids.
         """
-        if key in self.relationships:
-            return self.relationships[key]
-        return []
+        return self.relationships[key] if key in self.relationships else []
 
     def remove_relationship(self, key: ObjectTypes, annotation_ids: Optional[Union[List[str], str]] = None) -> None:
         """
@@ -387,8 +380,7 @@ class CategoryAnnotation(Annotation):
 
     @classmethod
     def from_dict(cls, **kwargs: JsonDict) -> "CategoryAnnotation":
-        category_ann = ann_from_dict(cls, **kwargs)
-        return category_ann
+        return ann_from_dict(cls, **kwargs)
 
     @staticmethod
     def get_state_attributes() -> List[str]:

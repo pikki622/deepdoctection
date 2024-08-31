@@ -90,11 +90,7 @@ def to_bool(inputs: Union[str, bool, int]) -> bool:
     :param inputs: Input string
     :return: boolean value
     """
-    if isinstance(inputs, bool):
-        return inputs
-    if inputs == "False":
-        return False
-    return True
+    return inputs if isinstance(inputs, bool) else inputs != "False"
 
 
 # Copyright (c) Tensorpack Contributors

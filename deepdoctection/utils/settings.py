@@ -339,7 +339,7 @@ def token_class_with_tag_to_token_class_and_tag(
 _ALL_TYPES_DICT = {}
 _ALL_TYPES = set(object_types_registry.get_all().values())
 for ob in _ALL_TYPES:
-    _ALL_TYPES_DICT.update({e.value: e for e in ob})
+    _ALL_TYPES_DICT |= {e.value: e for e in ob}
 
 
 def update_all_types_dict() -> None:

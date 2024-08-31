@@ -137,42 +137,41 @@ class Evaluator:
         self._sanity_checks()
 
         self.wandb_table_agent: Optional[WandbTableAgent]
-        if run is not None:
-            if self.dataset.dataset_info.type == DatasetType.object_detection:
+        if run is None:
+            self.wandb_table_agent = None
+
+        elif self.dataset.dataset_info.type == DatasetType.object_detection:
+            self.wandb_table_agent = WandbTableAgent(
+                run,
+                self.dataset.dataset_info.name,
+                50,
+                self.dataset.dataflow.categories.get_categories(filtered=True),
+            )
+        elif self.dataset.dataset_info.type == DatasetType.token_classification:
+            if hasattr(self.metric, "sub_cats"):
+                sub_cat_key, sub_cat_val_list = list(self.metric.sub_cats.items())[0]
+                sub_cat_val = sub_cat_val_list[0]
+                sub_cats = {sub_cat_key: sub_cat_val}
                 self.wandb_table_agent = WandbTableAgent(
                     run,
                     self.dataset.dataset_info.name,
                     50,
                     self.dataset.dataflow.categories.get_categories(filtered=True),
+                    self.dataset.dataflow.categories.get_sub_categories(
+                        categories=sub_cat_key,
+                        sub_categories=sub_cats,
+                        keys=False,
+                        values_as_dict=True,
+                        name_as_key=False,
+                    )[sub_cat_key][sub_cat_val],
+                    sub_cats,
                 )
-            elif self.dataset.dataset_info.type == DatasetType.token_classification:
-                if hasattr(self.metric, "sub_cats"):
-                    sub_cat_key, sub_cat_val_list = list(self.metric.sub_cats.items())[0]
-                    sub_cat_val = sub_cat_val_list[0]
-                    sub_cats = {sub_cat_key: sub_cat_val}
-                    self.wandb_table_agent = WandbTableAgent(
-                        run,
-                        self.dataset.dataset_info.name,
-                        50,
-                        self.dataset.dataflow.categories.get_categories(filtered=True),
-                        self.dataset.dataflow.categories.get_sub_categories(
-                            categories=sub_cat_key,
-                            sub_categories=sub_cats,
-                            keys=False,
-                            values_as_dict=True,
-                            name_as_key=False,
-                        )[sub_cat_key][sub_cat_val],
-                        sub_cats,
-                    )
-                else:
-                    raise AttributeError(
-                        "metric has no attribute sub_cats and cannot be used for token classification datasets"
-                    )
             else:
-                raise NotImplementedError
-
+                raise AttributeError(
+                    "metric has no attribute sub_cats and cannot be used for token classification datasets"
+                )
         else:
-            self.wandb_table_agent = None
+            raise NotImplementedError
 
     @overload
     def run(
@@ -211,10 +210,7 @@ class Evaluator:
         if self.wandb_table_agent:
             self.wandb_table_agent.log()
 
-        if output_as_dict:
-            return self.metric.result_list_to_dict(result)
-
-        return result
+        return self.metric.result_list_to_dict(result) if output_as_dict else result
 
     def _sanity_checks(self) -> None:
         assert self.dataset.dataflow.categories is not None
